@@ -17,6 +17,8 @@
                     "type": "array",
                     "items": { "type": "string" }
                 },
+                "enable-asset-scan": { "type": "boolean" },
+                "asset-scan-path": { "type": "string" },
                 "services": {
                     "type": "array",
                     "items": { "type": "string" }

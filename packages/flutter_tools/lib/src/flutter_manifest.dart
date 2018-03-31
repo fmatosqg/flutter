@@ -62,6 +62,19 @@ class FlutterManifest {
     return _flutterDescriptor['assets']?.map(Uri.encodeFull)?.map(Uri.parse)?.toList() ?? const <Uri>[];
   }
 
+  bool get isScanEnabled {
+    return _flutterDescriptor['enable-asset-scan'] == true
+        ? true
+        : false;
+  }
+
+  String get scanPath {
+    // TODO check and recover from malformed paths
+    return _flutterDescriptor['asset-scan-path'] != null
+        ? _flutterDescriptor['asset-scan-path']
+        : 'assets/images';
+  }
+
   List<Font> _fonts;
 
   List<Font> get fonts {

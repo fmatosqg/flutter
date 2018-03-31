@@ -6,31 +6,46 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:file/file.dart';
-
 import 'package:flutter_tools/src/asset.dart';
 import 'package:flutter_tools/src/base/file_system.dart';
 import 'package:flutter_tools/src/cache.dart';
-
 import 'package:test/test.dart';
 
 import 'src/common.dart';
 import 'src/context.dart';
 
 void main() {
-  void writePubspecFile(String path, String name, {List<String> assets}) {
+  void writePubspecFile(String path, String name,
+      {List<String> assets,
+        bool isScanEnabled = false, String scanPath,
+        bool isProjectPackage: false,}) {
     String assetsSection;
-    if (assets == null) {
+    if (assets == null && isScanEnabled == false) {
       assetsSection = '';
     } else {
       final StringBuffer buffer = new StringBuffer();
       buffer.write('''
 flutter:
-     assets:
+''');
+      if (assets != null && assets.isNotEmpty) {
+        buffer.write('''
+    assets:
 ''');
 
-      for (String asset in assets) {
-        buffer.write('''
+        for (String asset in assets) {
+          buffer.write('''
        - $asset
+''');
+        }
+      }
+
+      if (isScanEnabled)
+        buffer.write('''
+    enable-asset-scan: true
+''');
+      if (scanPath != null) {
+        buffer.write('''
+    asset-scan-path: $scanPath
 ''');
       }
       assetsSection = buffer.toString();
@@ -63,14 +78,18 @@ $assetsSection
     List<String> assets,
     List<String> packages,
     String expectedAssetManifest,
+    { bool isProjectPackage: false }
   ) async {
     final AssetBundle bundle = AssetBundleFactory.instance.createBundle();
     await bundle.build(manifestPath: 'pubspec.yaml');
 
     for (String packageName in packages) {
       for (String asset in assets) {
-        final String entryKey = Uri.encodeFull('packages/$packageName/$asset');
-        expect(bundle.entries.containsKey(entryKey), true);
+        final String entryKey = isProjectPackage
+            ? Uri.encodeFull('$asset')
+            : Uri.encodeFull('packages/$packageName/$asset');
+        expect(bundle.entries.containsKey(entryKey), true,
+            reason: 'Cannot find file $entryKey on bundle');
         expect(
           utf8.decode(await bundle.entries[entryKey].contentsAsBytes()),
           asset,
@@ -439,5 +458,145 @@ $assetsSection
       <String>['test_package'],
       expectedAssetManifest,
     );
+  });
+
+  group('AssetBundle assets from packages with scan enabled', () {
+    testUsingContext(
+        'Two assets are bundled when package has one asset listed and another not listed, scan enabled', () async {
+      establishFlutterRoot();
+
+      writePubspecFile('pubspec.yaml', 'test');
+      writePackagesFile('test_package:p/p/lib/');
+
+      final List<String> assetsOnPubspec = <String>['a/foo'];
+
+      final List<String> assetsOnDisk = <String>[];
+      assetsOnDisk.addAll(assetsOnPubspec);
+      assetsOnDisk.addAll(<String>[ 'a/bar']);
+
+      writePubspecFile(
+        'p/p/pubspec.yaml',
+        'test_package',
+        assets: assetsOnPubspec,
+        isScanEnabled: true,
+        scanPath: 'a/',
+      );
+
+      writeAssets('p/p/', assetsOnDisk);
+      const String expectedAssetManifest =
+          '{"packages/test_package/a/foo":["packages/test_package/a/foo"],'
+          '"packages/test_package/a/bar":["packages/test_package/a/bar"]}';
+
+      await buildAndVerifyAssets(
+        assetsOnDisk,
+        <String>['test_package'],
+        expectedAssetManifest,
+      );
+    });
+
+    testUsingContext(
+        'One asset is bundled when a package has an asset with one variant and scan is enabled', () async {
+      establishFlutterRoot();
+
+      writePubspecFile('pubspec.yaml', 'test');
+      writePackagesFile('test_package:p/p/lib/');
+
+      final List<String> assets = <String>['a/foo', 'a/v/foo'];
+
+      writePubspecFile(
+        'p/p/pubspec.yaml',
+        'test_package',
+        isScanEnabled: true,
+        scanPath: 'a/',
+      );
+
+      writeAssets('p/p/', assets);
+      const String expectedAssetManifest =
+          '{"packages/test_package/a/foo":["packages/test_package/a/foo","packages/test_package/a/v/foo"]}';
+
+      await buildAndVerifyAssets(
+        assets,
+        <String>['test_package'],
+        expectedAssetManifest,
+      );
+    });
+
+    testUsingContext(
+        'Two assets are bundled when package has two assets not listed, scan enabled', () async {
+      establishFlutterRoot();
+
+      writePubspecFile('pubspec.yaml', 'test');
+      writePackagesFile('test_package:p/p/lib/');
+
+      final List<String> assets = <String>['a/foo', 'a/bar'];
+
+      writePubspecFile(
+        'p/p/pubspec.yaml',
+        'test_package',
+        isScanEnabled: true,
+        scanPath: 'a/',
+
+      );
+
+      writeAssets('p/p/', assets);
+      const String expectedAssetManifest =
+          '{"packages/test_package/a/bar":["packages/test_package/a/bar"],'
+          '"packages/test_package/a/foo":["packages/test_package/a/foo"]}';
+
+      await buildAndVerifyAssets(
+        assets,
+        <String>['test_package'],
+        expectedAssetManifest,
+      );
+    });
+
+    testUsingContext(
+        'One asset is bundled when package has asset without primary variant, nothing listed, scan enabled', () async {
+      establishFlutterRoot();
+
+      writePubspecFile('pubspec.yaml', 'test');
+      writePackagesFile('test_package:p/p/lib/');
+
+      final List<String> assets = <String>['a/v/foo'];
+
+      writePubspecFile(
+        'p/p/pubspec.yaml',
+        'test_package',
+        isScanEnabled: true,
+        scanPath: 'a/',
+      );
+
+      writeAssets('p/p/', assets);
+      const String expectedAssetManifest =
+          '{"packages/test_package/a/foo":["packages/test_package/a/v/foo"]}';
+
+      await buildAndVerifyAssets(
+        assets,
+        <String>['test_package'],
+        expectedAssetManifest,
+      );
+    });
+
+    testUsingContext(
+        'One asset is bundled on project package, nothing listed, scan enabled', () async {
+      establishFlutterRoot();
+
+      writePubspecFile('pubspec.yaml', 'main_test_package',
+      isScanEnabled: true,
+      scanPath: 'a/');
+      writePackagesFile('main_test_package:lib/');
+
+      final List<String> assets = <String>['a/v/foo'];
+      writeAssets('', assets);
+      const String expectedAssetManifest =
+          '{"a/foo":["a/v/foo"]}';
+
+      await buildAndVerifyAssets(
+        assets,
+        <String>['main_test_package'],
+        expectedAssetManifest,
+        isProjectPackage:true,
+      );
+    });
   });
 }

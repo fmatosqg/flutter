@@ -27,6 +27,8 @@ abstract class AssetBundleFactory {
 
   /// Creates a new [AssetBundle].
   AssetBundle createBundle();
+
+//  static FileMode ff;
 }
 
 abstract class AssetBundle {
@@ -110,8 +112,8 @@ class _ManifestAssetBundle implements AssetBundle {
       return 0;
     }
 
-    final String assetBasePath = fs.path.dirname(fs.path.absolute(manifestPath));
 
+    final String assetBasePath = fs.path.dirname(fs.path.absolute(manifestPath));
     _lastBuildTimestamp = new DateTime.now();
 
     final PackageMap packageMap = new PackageMap(packagesPath);
@@ -124,11 +126,11 @@ class _ManifestAssetBundle implements AssetBundle {
       packageMap,
       flutterManifest,
       assetBasePath,
-      excludeDirs: <String>[workingDirPath, getBuildDirectory()]
+        excludeDirs: <String>[workingDirPath, getBuildDirectory()],
+        scannedAssets: flutterManifest.isScanEnabled
+            ? _scanAssets(assetBasePath, flutterManifest.scanPath)
+            : <Uri>[]
     );
-
-    if (assetVariants == null)
-      return 1;
 
     final List<Map<String, dynamic>> fonts = _parseFonts(
       flutterManifest,
@@ -142,30 +144,35 @@ class _ManifestAssetBundle implements AssetBundle {
       if (package != null && package.scheme == 'file') {
         final String packageManifestPath = fs.path.fromUri(package.resolve('../pubspec.yaml'));
         final FlutterManifest packageFlutterManifest = await FlutterManifest.createFromPath(packageManifestPath);
-        if (packageFlutterManifest == null)
-          continue;
         // Skip the app itself
-        if (packageFlutterManifest.appName == flutterManifest.appName)
+        if (packageFlutterManifest?.appName == flutterManifest.appName) {
           continue;
+        }
         final String packageBasePath = fs.path.dirname(packageManifestPath);
 
+
         final Map<_Asset, List<_Asset>> packageAssets = _parseAssets(
-          packageMap,
-          packageFlutterManifest,
-          packageBasePath,
-          packageName: packageName,
+            packageMap,
+            packageFlutterManifest,
+            packageBasePath,
+            packageName: packageName,
+            scannedAssets: packageFlutterManifest?.isScanEnabled == true
+                ? _scanAssets(packageBasePath, packageFlutterManifest.scanPath)
+                : <Uri>[]
         );
 
         if (packageAssets == null)
           return 1;
         assetVariants.addAll(packageAssets);
 
-        fonts.addAll(_parseFonts(
-          packageFlutterManifest,
-          includeDefaultFonts,
-          packageMap,
-          packageName: packageName,
-        ));
+        if (packageFlutterManifest != null) {
+          fonts.addAll(_parseFonts(
+            packageFlutterManifest,
+            includeDefaultFonts,
+            packageMap,
+            packageName: packageName,
+          ));
+        }
       }
     }
 
@@ -492,12 +499,20 @@ Map<_Asset, List<_Asset>> _parseAssets(
   FlutterManifest flutterManifest,
   String assetBase, {
   List<String> excludeDirs: const <String>[],
-  String packageName
+      String packageName,
+      List<Uri> scannedAssets: const <Uri>[]
 }) {
   final Map<_Asset, List<_Asset>> result = <_Asset, List<_Asset>>{};
 
   final _AssetDirectoryCache cache = new _AssetDirectoryCache(excludeDirs);
-  for (Uri assetUri in flutterManifest.assets) {
+
+  final List<Uri> allAssets = <Uri>[];
+  if (flutterManifest?.assets?.isNotEmpty == true) {
+    allAssets.addAll(flutterManifest.assets);
+  }
+  allAssets.addAll(scannedAssets);
+
+  for (Uri assetUri in allAssets) {
     final _Asset asset = _resolveAsset(
       packageMap,
       assetBase,
@@ -521,21 +536,23 @@ Map<_Asset, List<_Asset>> _parseAssets(
     result[asset] = variants;
   }
 
-  // Add assets referenced in the fonts section of the manifest.
-  for (Font font in flutterManifest.fonts) {
-    for (FontAsset fontAsset in font.fontAssets) {
-      final _Asset baseAsset = _resolveAsset(
-        packageMap,
-        assetBase,
-        fontAsset.assetUri,
-        packageName,
-      );
-      if (!baseAsset.assetFileExists) {
-        printError('Error: unable to locate asset entry in pubspec.yaml: "${fontAsset.assetUri}".');
-        return null;
-      }
+  if (flutterManifest != null) {
+    // Add assets referenced in the fonts section of the manifest.
+    for (Font font in flutterManifest.fonts) {
+      for (FontAsset fontAsset in font.fontAssets) {
+        final _Asset baseAsset = _resolveAsset(
+          packageMap,
+          assetBase,
+          fontAsset.assetUri,
+          packageName,
+        );
+        if (!baseAsset.assetFileExists) {
+          printError('Error: unable to locate asset entry in pubspec.yaml: "${fontAsset.assetUri}".');
+          return null;
+        }
 
-      result[baseAsset] = <_Asset>[];
+        result[baseAsset] = <_Asset>[];
+      }
     }
   }
 
@@ -582,4 +599,40 @@ _Asset _resolvePackageAsset(Uri assetUri, PackageMap packageMap) {
   printStatus('Error detected in pubspec.yaml:', emphasis: true);
   printError('Could not resolve package for asset $assetUri.\n');
   return null;
+}
+
+/// finds assets on disk that are not listed in pubspec
+List<Uri> _scanAssets(String packageFolder, String scanPath) {
+  final Directory dir = getReplaySource('', packageFolder);
+
+  final List<FileSystemEntity> lister = dir.listSync(
+      recursive: true, followLinks: false);
+
+  final Set<Uri> result = new Set<Uri>();
+
+  for (FileSystemEntity entity in lister) {
+    if (entity is File) {
+      final String relpath = entity.path.substring(dir.path.length + 1);
+      if (_isPrimaryVariant(relpath, scanPath)) {
+        result.add(new Uri(path: relpath));
+      } else {
+        final String parentFolder = fs.path.dirname(fs.path.dirname(relpath));
+
+        if ('$parentFolder/' == scanPath) {
+          final String basename = fs.path.basename(relpath);
+          result.add(new Uri(path: '$parentFolder/$basename'));
+        }
+      }
+    }
+  }
+
+  return result
+      .toList()
+    ..sort((Uri a, Uri b) => a.path.compareTo(b.path));
+}
+
+/// returns true when [relpath] file sits directly in folder [scanPath]
+bool _isPrimaryVariant(String relpath, String scanPath) {
+  return relpath.startsWith(scanPath) &&
+      (!relpath.contains('/', scanPath.length + 1));
 }
