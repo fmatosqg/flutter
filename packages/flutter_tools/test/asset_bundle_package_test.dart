@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:file/file.dart';
+import 'package:file/memory.dart';
 import 'package:flutter_tools/src/asset.dart';
 import 'package:flutter_tools/src/base/file_system.dart';
 import 'package:flutter_tools/src/cache.dart';
@@ -14,7 +15,22 @@ import 'package:test/test.dart';
 import 'src/common.dart';
 import 'src/context.dart';
 
+
 void main() {
+  testWithFs(new MemoryFileSystem(style: FileSystemStyle.posix));
+  testWithFs(new MemoryFileSystem(style: FileSystemStyle.windows));
+}
+
+void testWithFs(MemoryFileSystem fs){
+
+  void testUsingContextAndFs(String description, dynamic testMethod()){
+
+    testUsingContext('$description. Mem FS style ${fs.style}.', testMethod,
+        overrides: <Type, Generator>{
+          FileSystem: () => fs,
+        });
+  }
+
   void writePubspecFile(String path, String name,
       {List<String> assets,
         bool isScanEnabled = false, String scanPath,
@@ -134,7 +150,7 @@ $assetsSection
   });
 
   group('AssetBundle assets from packages', () {
-    testUsingContext('No assets are bundled when the package has no assets', () async {
+    testUsingContextAndFs('No assets are bundled when the package has no assets', () async {
       establishFlutterRoot();
 
       writePubspecFile('pubspec.yaml', 'test');
@@ -151,7 +167,7 @@ $assetsSection
       );
     });
 
-    testUsingContext('No assets are bundled when the package has an asset that is not listed', () async {
+    testUsingContextAndFs('No assets are bundled when the package has an asset that is not listed', () async {
       establishFlutterRoot();
 
       writePubspecFile('pubspec.yaml', 'test');
@@ -172,7 +188,7 @@ $assetsSection
 
     });
 
-    testUsingContext('One asset is bundled when the package has and lists one asset its pubspec', () async {
+    testUsingContextAndFs('One asset is bundled when the package has and lists one asset its pubspec', () async {
       establishFlutterRoot();
 
       writePubspecFile('pubspec.yaml', 'test');
@@ -196,7 +212,7 @@ $assetsSection
       );
     });
 
-    testUsingContext("One asset is bundled when the package has one asset, listed in the app's pubspec", () async {
+    testUsingContextAndFs("One asset is bundled when the package has one asset, listed in the app's pubspec", () async {
       establishFlutterRoot();
 
       final List<String> assetEntries = <String>['packages/test_package/a/foo'];
@@ -220,7 +236,7 @@ $assetsSection
       );
     });
 
-    testUsingContext('One asset and its variant are bundled when the package has an asset and a variant, and lists the asset in its pubspec', () async {
+    testUsingContextAndFs('One asset and its variant are bundled when the package has an asset and a variant, and lists the asset in its pubspec', () async {
       establishFlutterRoot();
 
       writePubspecFile('pubspec.yaml', 'test');
@@ -244,7 +260,7 @@ $assetsSection
       );
     });
 
-    testUsingContext('One asset and its variant are bundled when the package has an asset and a variant, and the app lists the asset in its pubspec', () async {
+    testUsingContextAndFs('One asset and its variant are bundled when the package has an asset and a variant, and the app lists the asset in its pubspec', () async {
       establishFlutterRoot();
 
       writePubspecFile(
@@ -271,7 +287,7 @@ $assetsSection
       );
     });
 
-    testUsingContext('Two assets are bundled when the package has and lists two assets in its pubspec', () async {
+    testUsingContextAndFs('Two assets are bundled when the package has and lists two assets in its pubspec', () async {
       establishFlutterRoot();
 
       writePubspecFile('pubspec.yaml', 'test');
@@ -296,7 +312,7 @@ $assetsSection
       );
     });
 
-    testUsingContext("Two assets are bundled when the package has two assets, listed in the app's pubspec", () async {
+    testUsingContextAndFs("Two assets are bundled when the package has two assets, listed in the app's pubspec", () async {
       establishFlutterRoot();
 
       final List<String> assetEntries = <String>[
@@ -328,7 +344,7 @@ $assetsSection
       );
     });
 
-    testUsingContext('Two assets are bundled when two packages each have and list an asset their pubspec', () async {
+    testUsingContextAndFs('Two assets are bundled when two packages each have and list an asset their pubspec', () async {
       establishFlutterRoot();
 
       writePubspecFile(
@@ -364,7 +380,7 @@ $assetsSection
       );
     });
 
-    testUsingContext("Two assets are bundled when two packages each have an asset, listed in the app's pubspec", () async {
+    testUsingContextAndFs("Two assets are bundled when two packages each have an asset, listed in the app's pubspec", () async {
       establishFlutterRoot();
 
       final List<String> assetEntries = <String>[
@@ -403,7 +419,7 @@ $assetsSection
       );
     });
 
-    testUsingContext('One asset is bundled when the app depends on a package, listing in its pubspec an asset from another package', () async {
+    testUsingContextAndFs('One asset is bundled when the app depends on a package, listing in its pubspec an asset from another package', () async {
       establishFlutterRoot();
       writePubspecFile(
         'pubspec.yaml',
@@ -435,7 +451,7 @@ $assetsSection
     });
   });
 
-  testUsingContext('Asset paths can contain URL reserved characters', () async {
+  testUsingContextAndFs('Asset paths can contain URL reserved characters', () async {
     establishFlutterRoot();
 
     writePubspecFile('pubspec.yaml', 'test');
@@ -494,7 +510,7 @@ $assetsSection
       );
     });
 
-    testUsingContext(
+    testUsingContextAndFs(
         'One asset is bundled when a package has an asset with one variant and scan is enabled', () async {
       establishFlutterRoot();
 
@@ -521,7 +537,7 @@ $assetsSection
       );
     });
 
-    testUsingContext(
+    testUsingContextAndFs(
         'Two assets are bundled when package has two assets not listed, scan enabled', () async {
       establishFlutterRoot();
 
@@ -550,7 +566,7 @@ $assetsSection
       );
     });
 
-    testUsingContext(
+    testUsingContextAndFs(
         'One asset is bundled when package has asset without primary variant, nothing listed, scan enabled', () async {
       establishFlutterRoot();
 
@@ -577,7 +593,7 @@ $assetsSection
       );
     });
 
-    testUsingContext(
+    testUsingContextAndFs(
         'One asset is bundled on project package, nothing listed, scan enabled', () async {
       establishFlutterRoot();
 

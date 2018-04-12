@@ -603,7 +603,7 @@ _Asset _resolvePackageAsset(Uri assetUri, PackageMap packageMap) {
 
 /// finds assets on disk that are not listed in pubspec
 List<Uri> _scanAssets(String packageFolder, String scanPath) {
-  final Directory dir = getReplaySource('', packageFolder);
+  final Directory dir = fs.directory(packageFolder);
 
   final List<FileSystemEntity> lister = dir.listSync(
       recursive: true, followLinks: false);
