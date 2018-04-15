@@ -1,14 +1,16 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
+import 'package:file/file.dart';
+import 'package:file/memory.dart';
+import 'package:flutter_tools/src/base/file_system.dart';
 import 'package:flutter_tools/src/cache.dart';
 import 'package:flutter_tools/src/flutter_manifest.dart';
-
 import 'package:test/test.dart';
 
 import 'src/common.dart';
 import 'src/context.dart';
+// Copyright 2017 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 
 void main() {
   setUpAll(() {
@@ -357,5 +359,37 @@ flutter:
       final FlutterManifest flutterManifest = await FlutterManifest.createFromString(manifest);
       expect(flutterManifest.isEmpty, false);
     });
+  });
+
+  group('FlutterManifest with MemoryFileSystem', () {
+    void test() async {
+      const String manifest = '''
+name: test
+dependencies:
+  flutter:
+    sdk: flutter
+flutter:
+''';
+
+      final FlutterManifest flutterManifest = await FlutterManifest
+          .createFromString(manifest);
+      expect(flutterManifest.isEmpty, false);
+    }
+
+    testUsingContext('Validate manifest on Posix FS', () async {
+      test();
+    },
+        overrides: <Type, Generator>{
+          FileSystem: () => new MemoryFileSystem(style: FileSystemStyle.posix),
+        });
+
+
+    testUsingContext('Validate manifest on Windows FS', () async {
+      test();
+    },
+        overrides: <Type, Generator>{
+          FileSystem: () =>
+          new MemoryFileSystem(style: FileSystemStyle.windows),
+        });
   });
 }
