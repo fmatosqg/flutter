@@ -186,6 +186,9 @@ class _ManifestAssetBundle implements AssetBundle {
       if (asset.assetFileExists) {
         assert(!assetVariants[asset].contains(asset));
         assetVariants[asset].insert(0, asset);
+        print('+++++ got new entry on bundle ${asset} / partial results $assetVariants');
+      } else {
+        print('++++File not found ${asset.assetFile.absolute}');
       }
       for (_Asset variant in assetVariants[asset]) {
         assert(variant.assetFileExists);
@@ -494,32 +497,34 @@ Map<_Asset, List<_Asset>> _parseAssets(
   List<String> excludeDirs: const <String>[],
   String packageName
 }) {
+
   final Map<_Asset, List<_Asset>> result = <_Asset, List<_Asset>>{};
 
   final _AssetDirectoryCache cache = new _AssetDirectoryCache(excludeDirs);
   for (Uri assetUri in flutterManifest.assets) {
-    final _Asset asset = _resolveAsset(
-      packageMap,
-      assetBase,
-      assetUri,
-      packageName,
-    );
-    final List<_Asset> variants = <_Asset>[];
-    for (String path in cache.variantsFor(asset.assetFile.path)) {
-      final String relativePath = fs.path.relative(path, from: asset.baseDir);
-      final Uri relativeUri = fs.path.toUri(relativePath);
-      final Uri entryUri = asset.symbolicPrefixUri == null
-          ? relativeUri
-          : asset.symbolicPrefixUri.resolveUri(relativeUri);
-      variants.add(new _Asset(
-        baseDir: asset.baseDir,
-        entryUri: entryUri,
-        relativeUri: relativeUri,
-      ));
+
+    print('Manifest entry is $assetUri');
+
+
+    if ( assetUri.toString().endsWith('/')){
+      // scanning for folder
+      _parseAssetsFromFolder(packageMap, flutterManifest, assetBase,
+          cache, result, assetUri,
+          excludeDirs: excludeDirs, packageName: packageName);
+
+    } else {
+      // scanning for file
+
+      _parseAssetFromFile(packageMap, flutterManifest, assetBase,
+          cache, result, assetUri,
+          excludeDirs: excludeDirs, packageName: packageName);
     }
 
-    result[asset] = variants;
+
+
+    print ('Result is $result');
   }
+
 
   // Add assets referenced in the fonts section of the manifest.
   for (Font font in flutterManifest.fonts) {
@@ -542,12 +547,77 @@ Map<_Asset, List<_Asset>> _parseAssets(
   return result;
 }
 
+
+void _parseAssetsFromFolder(PackageMap packageMap,
+    FlutterManifest flutterManifest,
+    String assetBase,
+    _AssetDirectoryCache cache,
+    Map<_Asset, List<_Asset>> result,
+    Uri assetUri,
+    { List<String> excludeDirs: const <String>[],
+      String packageName}) {
+
+  final String fullPath = fs.path.join(assetBase, assetUri.toString());
+
+  print('Scan folder $fullPath');
+  final Directory dir = fs.directory(fullPath);
+
+  final List<FileSystemEntity> lister = dir.listSync(
+      recursive: true, followLinks: false);
+
+  for (FileSystemEntity entity in lister) {
+    if (entity is File) {
+      final relPath = fs.path.relative(entity.path,from:assetBase);
+
+      print('found file ${entity.absolute} / $relPath');
+      _parseAssetFromFile(packageMap, flutterManifest, assetBase, cache, result, new Uri(path: relPath), packageName: packageName);
+    }
+  }
+
+    }
+
+void _parseAssetFromFile(PackageMap packageMap,
+    FlutterManifest flutterManifest,
+    String assetBase,
+    _AssetDirectoryCache cache,
+    Map<_Asset, List<_Asset>> result,
+    Uri assetUri,
+    { List<String> excludeDirs: const <String>[],
+      String packageName}) {
+  final _Asset asset = _resolveAsset(
+
+    packageMap,
+    assetBase,
+    assetUri,
+    packageName,
+  );
+  final List<_Asset> variants = <_Asset>[];
+  for (String path in cache.variantsFor(asset.assetFile.path)) {
+    print('Entry in cache is $path');
+    final String relativePath = fs.path.relative(path, from: asset.baseDir);
+    final Uri relativeUri = fs.path.toUri(relativePath);
+    final Uri entryUri = asset.symbolicPrefixUri == null
+        ? relativeUri
+        : asset.symbolicPrefixUri.resolveUri(relativeUri);
+    variants.add(new _Asset(
+      baseDir: asset.baseDir,
+      entryUri: entryUri,
+      relativeUri: relativeUri,
+    ));
+  }
+
+  print('Partial result $result');
+  result[asset] = variants;
+}
+
 _Asset _resolveAsset(
   PackageMap packageMap,
   String assetsBaseDir,
   Uri assetUri,
   String packageName,
 ) {
+
+  print('====== ======= resolveAsset $assetsBaseDir -- $assetUri -- $packageName}');
   final String assetPath = fs.path.fromUri(assetUri);
   if (assetUri.pathSegments.first == 'packages' && !fs.isFileSync(fs.path.join(assetsBaseDir, assetPath))) {
     // The asset is referenced in the pubspec.yaml as
