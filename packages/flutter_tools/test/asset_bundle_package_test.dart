@@ -6,11 +6,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:file/file.dart';
-
 import 'package:flutter_tools/src/asset.dart';
 import 'package:flutter_tools/src/base/file_system.dart';
 import 'package:flutter_tools/src/cache.dart';
-
 import 'package:test/test.dart';
 
 import 'src/common.dart';
@@ -70,7 +68,7 @@ $assetsSection
     for (String packageName in packages) {
       for (String asset in assets) {
         final String entryKey = Uri.encodeFull('packages/$packageName/$asset');
-        expect(bundle.entries.containsKey(entryKey), true);
+        expect(bundle.entries.containsKey(entryKey), true, reason: 'Cannot find key on bundle: $entryKey');
         expect(
           utf8.decode(await bundle.entries[entryKey].contentsAsBytes()),
           asset,
@@ -440,4 +438,67 @@ $assetsSection
       expectedAssetManifest,
     );
   });
+
+  group('AssetBundle assets from scanned paths', ()
+  {
+    testUsingContext(
+        'Two assets are bundled when scanning their directory', () async {
+      establishFlutterRoot();
+
+
+      writePubspecFile('pubspec.yaml', 'test');
+      writePackagesFile('test_package:p/p/lib/');
+
+      final List<String> assetsOnDisk = <String>['a/foo','a/bar'];
+      final List<String> assetsOnManifest = <String>['a/'];
+
+      writePubspecFile(
+        'p/p/pubspec.yaml',
+        'test_package',
+        assets: assetsOnManifest,
+      );
+
+      writeAssets('p/p/', assetsOnDisk);
+      const String expectedAssetManifest =
+          '{"packages/test_package/a/bar":["packages/test_package/a/bar"],'
+          '"packages/test_package/a/foo":["packages/test_package/a/foo"]}';
+
+      await buildAndVerifyAssets(
+        assetsOnDisk,
+        <String>['test_package'],
+        expectedAssetManifest,
+      );
+    });
+
+    testUsingContext(
+        'Two assets are bundled when listing one and scanning second directory', () async {
+      establishFlutterRoot();
+
+
+      writePubspecFile('pubspec.yaml', 'test');
+      writePackagesFile('test_package:p/p/lib/');
+
+      final List<String> assetsOnDisk = <String>['a/foo','abc/bar'];
+      final List<String> assetOnManifest = <String>['a/foo','abc/'];
+
+      writePubspecFile(
+        'p/p/pubspec.yaml',
+        'test_package',
+        assets: assetOnManifest,
+      );
+
+      writeAssets('p/p/', assetsOnDisk);
+      const String expectedAssetManifest =
+          '{"packages/test_package/a/foo":["packages/test_package/a/foo"],'
+          '"packages/test_package/abc/bar":["packages/test_package/abc/bar"]}';
+
+      await buildAndVerifyAssets(
+        assetsOnDisk,
+        <String>['test_package'],
+        expectedAssetManifest,
+      );
+    });
+  });
+
+
 }
