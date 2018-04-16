@@ -498,6 +498,58 @@ $assetsSection
         expectedAssetManifest,
       );
     });
+
+    testUsingContext(
+        'One assets is bundled with variant, scanning directory', () async {
+      establishFlutterRoot();
+
+
+      writePubspecFile('pubspec.yaml', 'test');
+      writePackagesFile('test_package:p/p/lib/');
+
+      final List<String> assetsOnDisk = <String>['a/foo','a/b/foo'];
+      final List<String> assetOnManifest = <String>['a/',];
+
+      writePubspecFile(
+        'p/p/pubspec.yaml',
+        'test_package',
+        assets: assetOnManifest,
+      );
+
+      writeAssets('p/p/', assetsOnDisk);
+      const String expectedAssetManifest =
+          '{"packages/test_package/a/foo":["packages/test_package/a/foo","packages/test_package/a/b/foo"]}';
+
+      await buildAndVerifyAssets(
+        assetsOnDisk,
+        <String>['test_package'],
+        expectedAssetManifest,
+      );
+    });
+
+    testUsingContext(
+        'One asset is bundled with variant, scanning wrong directory', () async {
+      establishFlutterRoot();
+
+
+      writePubspecFile('pubspec.yaml', 'test');
+      writePackagesFile('test_package:p/p/lib/');
+
+      final List<String> assetsOnDisk = <String>['a/foo','a/b/foo','a/bar'];
+      final List<String> assetOnManifest = <String>['a','a/bar']; // can't list 'a' as asset, should be 'a/'
+
+      writePubspecFile(
+        'p/p/pubspec.yaml',
+        'test_package',
+        assets: assetOnManifest,
+      );
+
+      writeAssets('p/p/', assetsOnDisk);
+
+      final AssetBundle bundle = AssetBundleFactory.instance.createBundle();
+      await bundle.build(manifestPath: 'pubspec.yaml');
+      assert(bundle.entries['AssetManifest.json'] == null,'Invalid pubspec.yaml should not generate AssetManifest.json'  );
+    });
   });
 
 

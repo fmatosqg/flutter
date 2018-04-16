@@ -175,6 +175,10 @@ class _ManifestAssetBundle implements AssetBundle {
       if (!asset.assetFileExists && assetVariants[asset].isEmpty) {
         printStatus('Error detected in pubspec.yaml:', emphasis: true);
         printError('No file or variants found for $asset.\n');
+
+        if ( fs.directory(asset.assetFile).existsSync()){
+          printError('Folders to be scanned for assets must end in /');
+        }
         return 1;
       }
       // The file name for an asset's "main" entry is whatever appears in
@@ -560,21 +564,35 @@ void _parseAssetsFromFolder(PackageMap packageMap,
   final String fullPath = fs.path.join(assetBase, assetUri.toString());
 
   print('Scan folder $fullPath');
-  final Directory dir = fs.directory(fullPath);
 
-  final List<FileSystemEntity> lister = dir.listSync(
-      recursive: true, followLinks: false);
+  final List<FileSystemEntity> lister = fs.directory(fullPath)
+      .listSync(recursive: false, followLinks: false);
 
   for (FileSystemEntity entity in lister) {
     if (entity is File) {
-      final relPath = fs.path.relative(entity.path,from:assetBase);
+      final relPath = fs.path.relative(entity.path, from: assetBase);
 
-      print('found file ${entity.absolute} / $relPath');
-      _parseAssetFromFile(packageMap, flutterManifest, assetBase, cache, result, new Uri(path: relPath), packageName: packageName);
+      print('found file ${entity.absolute} -- $relPath');
+      _parseAssetFromFile(packageMap, flutterManifest, assetBase, cache, result,
+          new Uri(path: relPath), packageName: packageName);
+//    } else if (entity is Directory){
+//      final List<FileSystemEntity> variantLister = fs.directory(entity.absolute)
+//          .listSync(recursive: false, followLinks: false);
+//
+//      for (FileSystemEntity variantEntity in variantLister) {
+//        if (variantEntity is File) {
+//
+//          final imaginaryAsset = fs.path.relative(
+//              variantEntity.path, from: entity.path);
+//          fs.path.join(assetBase, imaginaryAsset);
+//        print('+++++++++1 found variant ${variantEntity.absolute}');
+//        print ('+++++++++2 main asset folder is $assetBase -- imaginary asset main file is $imaginaryAsset ');
+//        }
+//      }
+
     }
   }
-
-    }
+}
 
 void _parseAssetFromFile(PackageMap packageMap,
     FlutterManifest flutterManifest,
@@ -606,7 +624,8 @@ void _parseAssetFromFile(PackageMap packageMap,
     ));
   }
 
-  print('Partial result $result');
+  print(')))))))))))))) Partial result $result');
+//  assert(variants.length == 0,'No variants found for ${asset.assetFile}');
   result[asset] = variants;
 }
 
