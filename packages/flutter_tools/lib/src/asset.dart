@@ -571,7 +571,7 @@ void _parseAssetsFromFolder(PackageMap packageMap,
 
   for (FileSystemEntity entity in lister) {
     if (entity is File) {
-      final relPath = fs.path.relative(entity.path, from: assetBase);
+      final String relPath = fs.path.relative(entity.path, from: assetBase);
 
       _parseAssetFromFile(packageMap, flutterManifest, assetBase, cache, result,
           new Uri(path: relPath), packageName: packageName);
