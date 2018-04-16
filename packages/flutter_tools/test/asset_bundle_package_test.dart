@@ -6,11 +6,11 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:file/file.dart';
-
+import 'package:file/memory.dart';
 import 'package:flutter_tools/src/asset.dart';
 import 'package:flutter_tools/src/base/file_system.dart';
 import 'package:flutter_tools/src/cache.dart';
-
+import 'package:flutter_tools/src/flutter_manifest.dart';
 import 'package:test/test.dart';
 
 import 'src/common.dart';
@@ -501,8 +501,96 @@ $assetsSection
       );
     });
 
-    testUsingContext(
-        'One assets is bundled with variant, scanning directory', () async {
+    /*
+//    copyFile
+    final FileSystem windowsFs = new MemoryFileSystem(
+        style: FileSystemStyle.windows);
+
+    final windowsFile = '/C:/Users/fmatos/code/android/flutter/fwk_flutter/packages/flutter_tools/schema/pubspec_yaml.json';
+    final windowsDir = '/C:/Users/fmatos/code/android/flutter/fwk_flutter/packages/flutter_tools/schema/';
+//
+    //////////////////////////////////////
+    windowsFs.directory(windowsDir).createSync(recursive: true);
+    print("++++----======== ${windowsDir} exists");
+//
+    windowsFs.file(windowsFile)
+//    .writeAsStringSync('whateverrrrrrr');
+//
+//    print("++++----======== ${windowsFile} exists");
+
+//    var sch = new io.File(windowsFile)
+//        .readAsStringSync();
+
+//    print('++++----======== ${windowsFile} read successssss $sch' );
+*/
+
+    String readSchemaPath(FileSystem fs) {
+      final String schemaPath = buildSchemaPath(fs);
+      final schemaFile = fs.file(schemaPath);
+
+      return schemaFile.readAsStringSync();
+//      return "{}";
+    }
+
+    writeSchema(String schema, FileSystem fs) {
+      final String schemaPath = buildSchemaPath(fs);
+      final schemaFile = fs.file(schemaPath);
+      final schemaDir = fs.directory(buildSchemaDir(fs));
+
+
+      print('3333333333 schema dir is $schemaDir');
+      schemaDir.createSync(recursive: true);
+      print('3333333333 schema file is $schemaFile');
+      schemaFile.writeAsStringSync(schema);
+      print('3333333333 schema file is written');
+
+
+      final String readSchema = fs.file(schemaPath).readAsStringSync();
+//      print('3333333333 schema file is read $readSchema');
+
+
+
+    }
+    //////////////////////////////////////
+    testUsingContextAndFs(String description, dynamic testMethod(),)  {
+      final FileSystem windowsFs = new MemoryFileSystem(
+          style: FileSystemStyle.windows);
+
+      final FileSystem posixFs = new MemoryFileSystem(
+          style: FileSystemStyle.posix);
+
+      establishFlutterRoot();
+
+
+      final String schema = readSchemaPath(fs);
+
+      testUsingContext('$description - on windows FS', ()  {
+        establishFlutterRoot();
+        writeSchema(schema, windowsFs);
+
+//        print('45645645646545 ${readSchemaPath(windowsFs)}');
+
+        testMethod();
+      },
+          overrides: <Type, Generator>{
+            FileSystem: () => windowsFs
+          });
+
+//      testUsingContext('$description - on posix FS', (){
+//        establishFlutterRoot();
+//        writeSchema(schema, windowsFs);
+//        testMethod();
+//      },
+//          overrides: <Type, Generator>{
+//            FileSystem: () => posixFs,
+//          });
+
+    }
+
+
+
+    testUsingContextAndFs(
+        'One asset is bundled with variant, scanning directory', () async {
       establishFlutterRoot();
 
 

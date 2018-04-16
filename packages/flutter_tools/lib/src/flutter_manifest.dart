@@ -11,7 +11,7 @@ import 'package:yaml/yaml.dart';
 import 'base/file_system.dart';
 import 'cache.dart';
 import 'globals.dart';
-
+import 'dart:convert' as convert;
 /// A wrapper around the `flutter` section in the `pubspec.yaml` file.
 class FlutterManifest {
   FlutterManifest._();
@@ -151,13 +151,34 @@ class FontAsset {
   String toString() => '$runtimeType(asset: ${assetUri.path}, weight; $weight, style: $style)';
 }
 
-Future<bool> _validate(Object manifest) async {
-  final String schemaPath = fs.path.join(
+
+String buildSchemaDir(FileSystem fs){
+  return fs.path.join(
+    fs.path.absolute(Cache.flutterRoot), 'packages', 'flutter_tools', 'schema',
+//    'pubspec_yaml.json',
+  );
+}
+String buildSchemaPath(FileSystem fs){
+  return fs.path.join(
     fs.path.absolute(Cache.flutterRoot), 'packages', 'flutter_tools', 'schema',
     'pubspec_yaml.json',
   );
-  final Schema schema = await Schema.createSchemaFromUrl(fs.path.toUri(schemaPath).toString());
+}
 
+Future<bool> _validate(Object manifest) async {
+
+  final String schemaPath= buildSchemaPath(fs);
+  print('vvvvvvvvvvvvvvvvv schema root ${Cache.flutterRoot}');
+  print('vvvvvvvvvvvvvvvvv schema path $schemaPath');
+  final toUri = fs.path.toUri(schemaPath).toString();
+
+  print('vvvvvvvvvvvvvvvvv schema uri $toUri');
+  final String schemaData =  fs.file(schemaPath).readAsStringSync();
+//  print('vvvvvvvvvvvvvvvvv schema data $schemaData');
+
+//  final Schema schema = await Schema.createSchemaFromUrl(fs.path.toUri(schemaPath).toString());
+  final Schema schema = await Schema.createSchema(convert.JSON.decode(schemaData));
+  print('Flutter manifest is getting validated');
   final Validator validator = new Validator(schema);
   if (validator.validate(manifest)) {
     return true;
