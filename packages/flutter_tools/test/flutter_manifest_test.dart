@@ -1,14 +1,16 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
+import 'package:file/file.dart';
+import 'package:file/memory.dart';
+import 'package:flutter_tools/src/base/file_system.dart';
 import 'package:flutter_tools/src/cache.dart';
 import 'package:flutter_tools/src/flutter_manifest.dart';
-
 import 'package:test/test.dart';
 
 import 'src/common.dart';
 import 'src/context.dart';
+// Copyright 2017 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 
 void main() {
   setUpAll(() {
@@ -358,4 +360,71 @@ flutter:
       expect(flutterManifest.isEmpty, false);
     });
   });
+
+  group('FlutterManifest with MemoryFileSystem', () {
+    void assertSchemaIsReadable() async {
+      const String manifest = '''
+name: test
+dependencies:
+  flutter:
+    sdk: flutter
+flutter:
+''';
+
+      final FlutterManifest flutterManifest = await FlutterManifest
+          .createFromString(manifest);
+      expect(flutterManifest.isEmpty, false);
+    }
+
+    void writeSchemaFile(FileSystem filesystem, String schemaData) {
+      final schemaPath = buildSchemaPath(filesystem);
+      final schemaFile = filesystem.file(schemaPath);
+
+      if   (true) {
+        final schemaDir = buildSchemaDir(filesystem);
+
+        filesystem.directory(schemaDir).createSync(recursive: true);
+        filesystem.file(schemaFile).writeAsStringSync(schemaData);
+      }
+    }
+
+    testUsingContextAndFs(String description, FileSystem filesystem,
+        dynamic testMethod()) {
+
+      const schemaData = '{}';
+
+      testUsingContext(description,
+              () async {
+            writeSchemaFile( filesystem, schemaData);
+            testMethod();
+      },
+          overrides: <Type, Generator>{
+            FileSystem: () => filesystem,
+          }
+      );
+    }
+
+    testUsingContext('Validate manifest on original fs', () async {
+      assertSchemaIsReadable();
+    });
+
+    testUsingContextAndFs('Validate manifest on Posix FS',
+        new MemoryFileSystem(style: FileSystemStyle.posix), () async {
+          const schemaData = 'aaaaaa';
+
+          assertSchemaIsReadable();
+        }
+    );
+
+
+    testUsingContextAndFs('Validate manifest on Windows FS',
+        new MemoryFileSystem(style: FileSystemStyle.windows), () async {
+          const schemaData = 'aaaaaa';
+          assertSchemaIsReadable();
+        }
+    );
+
+  });
+
 }
+
