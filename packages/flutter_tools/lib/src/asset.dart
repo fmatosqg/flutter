@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:file/memory.dart';
 import 'package:yaml/yaml.dart';
 
 import 'base/context.dart';
@@ -241,6 +242,47 @@ class _ManifestAssetBundle implements AssetBundle {
 
     return 0;
   }
+}
+
+bool isStyleableFSAndStyleIsWindows() {
+  if (fs is StyleableFileSystem) {
+    final styleableFs = fs as StyleableFileSystem;
+    if (styleableFs.style == FileSystemStyle.windows)
+      return true;
+  }
+
+  return false;
+}
+
+String resolveRelativePath(String relativePath, {String basePath: null}) {
+  return resolveRelativePathToUri(relativePath, basePath: basePath).toFilePath(
+      windows: isStyleableFSAndStyleIsWindows());
+}
+
+Uri resolveRelativePathToUri(String relativePath, {String basePath: null}) {
+  var fullPath = relativePath;
+
+
+  if (basePath != null) {
+//    final separator = isStyleableFSAndStyleIsWindows() ? '/' : '/';
+//    var sanitizedBasePath = new Uri.file(basePath).toFilePath();
+
+    fullPath = '$basePath/$relativePath';
+  }
+
+  print('Uri on MemFs the hardest code in the world $fullPath');
+
+  Uri pathUri;
+  if (isStyleableFSAndStyleIsWindows()) {
+    pathUri = new Uri.file(fullPath, windows: true);
+  } else {
+    pathUri =
+    new Uri.file(fullPath);
+  }
+
+  return
+    pathUri
+  ;
 }
 
 class _Asset {
@@ -589,19 +631,31 @@ void _parseAssetsFromFolder(PackageMap packageMap,
     Uri assetUri,
     { List<String> excludeDirs: const <String>[],
       String packageName}) {
+//  final String fullPath = resolveRelativePath(assetUri)//fs.path.join(assetBase, assetUri.toString());
+//  var fullPath = assetBase
 
-  final String fullPath = fs.path.join(assetBase, assetUri.toString());
+  var fullPath = resolveRelativePath(assetUri.toString(), basePath: assetBase);
 
-  print ('Parse folder $fullPath');
+  print('Parse folder $fullPath -- base $assetBase');
   final List<FileSystemEntity> lister = fs.directory(fullPath)
       .listSync(recursive: false, followLinks: false);
 
   for (FileSystemEntity entity in lister) {
     if (entity is File) {
-      final String relPath = fs.path.relative(entity.path, from: assetBase);
+      String relPath = fs.path.relative(entity.path, from: assetBase);
 
+      //
+      print('OMG relpath before $relPath');
+
+      Uri uri = new Uri.file(new Uri.file(relPath, windows: true)
+          .toFilePath()); // converts windows convention to bundle convention (same as posix)
+
+      print('OMG relpath uri  $uri  -- ${uri.toFilePath()}');
+
+      relPath = resolveRelativePath(entity.path);
+      print('OMG relpath after $relPath -- ${fs.file(relPath).existsSync()}');
       _parseAssetFromFile(packageMap, flutterManifest, assetBase, cache, result,
-          new Uri(path: relPath), packageName: packageName);
+          uri, packageName: packageName);
     }
   }
 }
@@ -614,8 +668,8 @@ void _parseAssetFromFile(PackageMap packageMap,
     Uri assetUri,
     { List<String> excludeDirs: const <String>[],
       String packageName}) {
+  print('_parseAssetFromFile 0 $assetBase -- $assetUri');
   final _Asset asset = _resolveAsset(
-
     packageMap,
     assetBase,
     assetUri,
@@ -628,6 +682,35 @@ void _parseAssetFromFile(PackageMap packageMap,
     final Uri entryUri = asset.symbolicPrefixUri == null
         ? relativeUri
         : asset.symbolicPrefixUri.resolveUri(relativeUri);
+
+
+//    final normalizedBaseDir = new Uri.file(
+//        asset.baseDir, windows: isStyleableFSAndStyleIsWindows());
+    var dir = fs
+        .directory(relativeUri)
+        .dirname;
+    var normalizedBaseDir = fs
+        .directory(dir)
+        .dirname;
+    final filenameWithoutPath = fs
+        .file(relativeUri.path)
+        .basename;
+
+    var assetEntry = '${asset
+        .symbolicPrefixUri}$relativeUri';
+//     Uri entryUri = new Uri.file(assetEntry);
+//     entryUri  = asset.symbolicPrefixUri.resolveUri(relativeUri);
+    print(
+        '_parseAssetFromFile 1 $path -- $normalizedBaseDir -- $filenameWithoutPath -- ');
+
+    print('_parseAssetFromFile 2 $path -- ${asset
+        .baseDir} -- $relativeUri');
+    print('_parseAssetFromFile 3 Entry uri -- ${asset
+        .symbolicPrefixUri}');
+
+    print(
+        '_parseAssetFromFile 4 Entry uri  corrected is $assetEntry -- ${entryUri
+            .toString()}');
     variants.add(
         new _Asset(
           baseDir: asset.baseDir,
@@ -637,8 +720,10 @@ void _parseAssetFromFile(PackageMap packageMap,
     );
   }
 
-  print('Result is $result');
   result[asset] = variants;
+
+  print('Result is $result -- adding $variants');
+
 }
 
 _Asset _resolveAsset(

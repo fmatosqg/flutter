@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:convert' as convert;
 
 import 'package:json_schema/json_schema.dart';
 import 'package:meta/meta.dart';
@@ -11,7 +12,6 @@ import 'package:yaml/yaml.dart';
 import 'base/file_system.dart';
 import 'cache.dart';
 import 'globals.dart';
-import 'dart:convert' as convert;
 /// A wrapper around the `flutter` section in the `pubspec.yaml` file.
 class FlutterManifest {
   FlutterManifest._();
@@ -62,7 +62,13 @@ class FlutterManifest {
   }
 
   List<Uri> get assets {
-    return _flutterDescriptor['assets']?.map(Uri.encodeFull)?.map(Uri.parse)?.toList() ?? const <Uri>[];
+    dynamic assetsBefore = _flutterDescriptor['assets'];
+    print('Flutter assets before ${assetsBefore}');
+    List<Uri> list = _flutterDescriptor['assets']?.map(Uri.encodeFull)
+        ?.map(Uri.parse)
+        ?.toList() ?? const <Uri>[];
+    print('Flutter assets after converting to uri $list');
+    return list;
   }
 
   List<Font> _fonts;

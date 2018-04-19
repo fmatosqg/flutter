@@ -39,13 +39,9 @@ flutter:
 //    final pathUri =new Uri.directory(Cache.flutterRoot,windows: true);
 //    final pathUri = fs.file(path).absolute;
 //    var pathUri = new Uri.file('../pubspec.yaml', windows: true).toFilePath(windows: true);
-    String   pathUri = new Uri.file(path ).toFilePath();
-    if (fs is StyleableFileSystem ) {
-      final styleableFs = fs as StyleableFileSystem;
-      if ( styleableFs.style== FileSystemStyle.windows) {
-        pathUri = new Uri.file(path, windows: true).toFilePath(windows: true);
-      }
-    }
+
+    var pathUri = resolveRelativePath(path);
+
     var pathStr = fs.file(fs
         .file(pathUri)
         .absolute);
@@ -105,7 +101,7 @@ $assetsSection
 
   void writeAssets(String path, List<String> assets) {
     for (String asset in assets) {
-      fs.file('$path$asset')
+      fs.file(resolveRelativePath(asset,basePath: path))
         ..createSync(recursive: true)
         ..writeAsStringSync(asset);
     }
