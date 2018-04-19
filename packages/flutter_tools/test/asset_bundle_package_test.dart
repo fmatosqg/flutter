@@ -441,8 +441,7 @@ $assetsSection
     );
   });
 
-  group('AssetBundle assets from scanned paths', ()
-  {
+  group('AssetBundle assets from scanned paths', () {
     testUsingContext(
         'Two assets are bundled when scanning their directory', () async {
       establishFlutterRoot();
@@ -451,7 +450,7 @@ $assetsSection
       writePubspecFile('pubspec.yaml', 'test');
       writePackagesFile('test_package:p/p/lib/');
 
-      final List<String> assetsOnDisk = <String>['a/foo','a/bar'];
+      final List<String> assetsOnDisk = <String>['a/foo', 'a/bar'];
       final List<String> assetsOnManifest = <String>['a/'];
 
       writePubspecFile(
@@ -480,8 +479,8 @@ $assetsSection
       writePubspecFile('pubspec.yaml', 'test');
       writePackagesFile('test_package:p/p/lib/');
 
-      final List<String> assetsOnDisk = <String>['a/foo','abc/bar'];
-      final List<String> assetOnManifest = <String>['a/foo','abc/'];
+      final List<String> assetsOnDisk = <String>['a/foo', 'abc/bar'];
+      final List<String> assetOnManifest = <String>['a/foo', 'abc/'];
 
       writePubspecFile(
         'p/p/pubspec.yaml',
@@ -501,29 +500,32 @@ $assetsSection
       );
     });
 
-    /*
-//    copyFile
-    final FileSystem windowsFs = new MemoryFileSystem(
-        style: FileSystemStyle.windows);
+    testUsingContext(
+        'One asset is bundled with variant, scanning wrong directory', () async {
+      establishFlutterRoot();
 
-    final windowsFile = '/C:/Users/fmatos/code/android/flutter/fwk_flutter/packages/flutter_tools/schema/pubspec_yaml.json';
-    final windowsDir = '/C:/Users/fmatos/code/android/flutter/fwk_flutter/packages/flutter_tools/schema/';
-//
-    //////////////////////////////////////
-    windowsFs.directory(windowsDir).createSync(recursive: true);
-    print("++++----======== ${windowsDir} exists");
-//
-    windowsFs.file(windowsFile)
-//    .writeAsStringSync('whateverrrrrrr');
-//
-//    print("++++----======== ${windowsFile} exists");
 
-//    var sch = new io.File(windowsFile)
-//        .readAsStringSync();
+      writePubspecFile('pubspec.yaml', 'test');
+      writePackagesFile('test_package:p/p/lib/');
 
-//    print('++++----======== ${windowsFile} read successssss $sch' );
-*/
+      final List<String> assetsOnDisk = <String>['a/foo','a/b/foo','a/bar'];
+      final List<String> assetOnManifest = <String>['a','a/bar']; // can't list 'a' as asset, should be 'a/'
 
+      writePubspecFile(
+        'p/p/pubspec.yaml',
+        'test_package',
+        assets: assetOnManifest,
+      );
+
+      writeAssets('p/p/', assetsOnDisk);
+
+      final AssetBundle bundle = AssetBundleFactory.instance.createBundle();
+      await bundle.build(manifestPath: 'pubspec.yaml');
+      assert(bundle.entries['AssetManifest.json'] == null,'Invalid pubspec.yaml should not generate AssetManifest.json'  );
+    });
+  });
+
+  group('AssetBundle assets from scanned paths with MemoryFileSystem', () {
     String readSchemaPath(FileSystem fs) {
       final String schemaPath = buildSchemaPath(fs);
       final schemaFile = fs.file(schemaPath);
@@ -532,23 +534,26 @@ $assetsSection
 //      return "{}";
     }
 
-    writeSchema(String schema, FileSystem fs) {
-      final String schemaPath = buildSchemaPath(fs);
-      final schemaFile = fs.file(schemaPath);
-      final schemaDir = fs.directory(buildSchemaDir(fs));
+    writeSchema(String schema, FileSystem filesystem) {
+      final String schemaPath = buildSchemaPath(filesystem);
+      final schemaFile = filesystem.file(schemaPath);
+
+      if (! schemaFile.existsSync()) {
+        final schemaDir = filesystem.directory(buildSchemaDir(filesystem));
 
 
-      print('3333333333 schema dir is $schemaDir');
-      schemaDir.createSync(recursive: true);
-      print('3333333333 schema file is $schemaFile');
-      schemaFile.writeAsStringSync(schema);
-      print('3333333333 schema file is written');
+        print('3333333333 schema dir is $schemaDir');
+        schemaDir.createSync(recursive: true);
+        print('3333333333 schema file is $schemaFile');
+        schemaFile.writeAsStringSync(schema);
+        print('3333333333 schema file is written');
 
 
-      final String readSchema = fs.file(schemaPath).readAsStringSync();
+        final String readSchema = filesystem.file(schemaPath)
+            .readAsStringSync();
 //      print('3333333333 schema file is read $readSchema');
 
-
+      }
 
     }
     //////////////////////////////////////
@@ -564,27 +569,30 @@ $assetsSection
 
       final String schema = readSchemaPath(fs);
 
-      testUsingContext('$description - on windows FS', ()  {
+      testUsingContext('$description - on windows FS', () async {
         establishFlutterRoot();
         writeSchema(schema, windowsFs);
-
-//        print('45645645646545 ${readSchemaPath(windowsFs)}');
-
         testMethod();
       },
           overrides: <Type, Generator>{
             FileSystem: () => windowsFs
           });
+//
+      testUsingContext('$description - on posix FS', () async {
+        establishFlutterRoot();
+        writeSchema(schema, posixFs);
+        testMethod();
+      },
+          overrides: <Type, Generator>{
+            FileSystem: () => posixFs
+          });
 
-//      testUsingContext('$description - on posix FS', (){
-//        establishFlutterRoot();
-//        writeSchema(schema, windowsFs);
-//        testMethod();
-//      },
-//          overrides: <Type, Generator>{
-//            FileSystem: () => posixFs,
-//          });
 
+      testUsingContext('$description - on original FS', () async {
+        establishFlutterRoot();
+        writeSchema(schema, fs);
+        testMethod();
+      });
     }
 
 
@@ -617,29 +625,6 @@ $assetsSection
       );
     });
 
-    testUsingContext(
-        'One asset is bundled with variant, scanning wrong directory', () async {
-      establishFlutterRoot();
-
-
-      writePubspecFile('pubspec.yaml', 'test');
-      writePackagesFile('test_package:p/p/lib/');
-
-      final List<String> assetsOnDisk = <String>['a/foo','a/b/foo','a/bar'];
-      final List<String> assetOnManifest = <String>['a','a/bar']; // can't list 'a' as asset, should be 'a/'
-
-      writePubspecFile(
-        'p/p/pubspec.yaml',
-        'test_package',
-        assets: assetOnManifest,
-      );
-
-      writeAssets('p/p/', assetsOnDisk);
-
-      final AssetBundle bundle = AssetBundleFactory.instance.createBundle();
-      await bundle.build(manifestPath: 'pubspec.yaml');
-      assert(bundle.entries['AssetManifest.json'] == null,'Invalid pubspec.yaml should not generate AssetManifest.json'  );
-    });
   });
 
 

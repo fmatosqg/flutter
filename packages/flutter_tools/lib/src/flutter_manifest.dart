@@ -18,9 +18,12 @@ class FlutterManifest {
 
   /// Returns null on invalid manifest. Returns empty manifest on missing file.
   static Future<FlutterManifest> createFromPath(String path) async {
-    if (path == null || !fs.isFileSync(path))
+    if (path == null || !fs.isFileSync(path)) {
+      print('Cannot find manifest at $path');
       return _createFromYaml(null);
+    }
     final String manifest = await fs.file(path).readAsString();
+    print('Dump manifest $manifest');
     return createFromString(manifest);
   }
 
@@ -169,8 +172,14 @@ Future<bool> _validate(Object manifest) async {
   final String schemaPath= buildSchemaPath(fs);
   final toUri = fs.path.toUri(schemaPath).toString();
 
-  final String schemaData =  fs.file(schemaPath).readAsStringSync();
-  final Schema schema = await Schema.createSchema(convert.JSON.decode(schemaData));
+  Schema schema;
+  if ( true ) {
+    final String schemaData = fs.file(schemaPath).readAsStringSync();
+    schema = await Schema.createSchema(
+        convert.JSON.decode(schemaData));
+  } else {
+     schema = await Schema.createSchemaFromUrl(toUri);
+  }
   final Validator validator = new Validator(schema);
   if (validator.validate(manifest)) {
     return true;

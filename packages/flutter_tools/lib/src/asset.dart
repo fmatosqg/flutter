@@ -114,6 +114,7 @@ class _ManifestAssetBundle implements AssetBundle {
 
     _lastBuildTimestamp = new DateTime.now();
 
+    print('Begin package problem here $packagesPath');
     final PackageMap packageMap = new PackageMap(packagesPath);
 
     // The _assetVariants map contains an entry for each asset listed
@@ -139,9 +140,26 @@ class _ManifestAssetBundle implements AssetBundle {
     // Add fonts and assets from packages.
     for (String packageName in packageMap.map.keys) {
       final Uri package = packageMap.map[packageName];
+
+      print('ppppppppp package $package ---- ${package.scheme}');
+      final String packageManifestPath = fs.path.fromUri(package.resolve('../pubspec.yaml'));
+      print('route to manifest is $packageManifestPath');
+      print('package resolve is ${package.resolve('../pubspec.yaml')}');
+
+
       if (package != null && package.scheme == 'file') {
+
+
         final String packageManifestPath = fs.path.fromUri(package.resolve('../pubspec.yaml'));
+
+        final TheUri = new Uri.file('../pubspec.yaml', windows: true).toFilePath(windows: true);
+        print('TheUri is $TheUri --  ${fs.file(TheUri).existsSync()}');
+        print('Wrong way is is $packageManifestPath --  ${fs.file(packageManifestPath).existsSync()}');
+
+
         final FlutterManifest packageFlutterManifest = await FlutterManifest.createFromPath(packageManifestPath);
+        print('Found package manifest at $packageManifestPath');
+        print('Found package manifest data ${packageFlutterManifest!=null}');
         if (packageFlutterManifest == null)
           continue;
         // Skip the app itself
@@ -518,8 +536,10 @@ Map<_Asset, List<_Asset>> _parseAssets(
   final _AssetDirectoryCache cache = new _AssetDirectoryCache(excludeDirs);
   for (Uri assetUri in flutterManifest.assets) {
 
+    print('Asset check ------ $assetUri');
     if ( assetUri.toString().endsWith('/')){
       // scanning for folder
+
       _parseAssetsFromFolder(packageMap, flutterManifest, assetBase,
           cache, result, assetUri,
           excludeDirs: excludeDirs, packageName: packageName);
@@ -566,6 +586,7 @@ void _parseAssetsFromFolder(PackageMap packageMap,
 
   final String fullPath = fs.path.join(assetBase, assetUri.toString());
 
+  print ('Parse folder $fullPath');
   final List<FileSystemEntity> lister = fs.directory(fullPath)
       .listSync(recursive: false, followLinks: false);
 
@@ -609,6 +630,8 @@ void _parseAssetFromFile(PackageMap packageMap,
         )
     );
   }
+
+  print('Result is $result');
   result[asset] = variants;
 }
 
