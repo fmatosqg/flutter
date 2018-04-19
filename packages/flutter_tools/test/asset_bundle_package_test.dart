@@ -36,7 +36,24 @@ flutter:
       assetsSection = buffer.toString();
     }
 
-    fs.file(path)
+//    final pathUri =new Uri.directory(Cache.flutterRoot,windows: true);
+//    final pathUri = fs.file(path).absolute;
+//    var pathUri = new Uri.file('../pubspec.yaml', windows: true).toFilePath(windows: true);
+    String   pathUri = new Uri.file(path ).toFilePath();
+    if (fs is StyleableFileSystem ) {
+      final styleableFs = fs as StyleableFileSystem;
+      if ( styleableFs.style== FileSystemStyle.windows) {
+        pathUri = new Uri.file(path, windows: true).toFilePath(windows: true);
+      }
+    }
+    var pathStr = fs.file(fs
+        .file(pathUri)
+        .absolute);
+
+    print('Pubspec creation uri $pathUri -- $pathStr');
+//path=pathStr;
+//    print('Pubspec created at path $path -- ${fs.file(path).absolute}');
+    fs.file(pathStr)
       ..createSync(recursive: true)
       ..writeAsStringSync('''
 name: $name
@@ -45,6 +62,8 @@ dependencies:
     sdk: flutter
 $assetsSection
 ''');
+
+    print('Verify pubspec created ${fs.file(pathStr).existsSync()}');
   }
 
   void establishFlutterRoot() {

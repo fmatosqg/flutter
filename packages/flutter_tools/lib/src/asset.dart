@@ -144,7 +144,10 @@ class _ManifestAssetBundle implements AssetBundle {
       print('ppppppppp package $package ---- ${package.scheme}');
       final String packageManifestPath = fs.path.fromUri(package.resolve('../pubspec.yaml'));
       print('route to manifest is $packageManifestPath');
-      print('package resolve is ${package.resolve('../pubspec.yaml')}');
+      print('package path is ${package.path}');
+
+      Uri packageResolve=package.resolve('../pubspec.yaml');
+      print('package resolve is ${packageResolve}');
 
 
       if (package != null && package.scheme == 'file') {
@@ -152,9 +155,12 @@ class _ManifestAssetBundle implements AssetBundle {
 
         final String packageManifestPath = fs.path.fromUri(package.resolve('../pubspec.yaml'));
 
+//        print('Test 1 ${}');
         final TheUri = new Uri.file('../pubspec.yaml', windows: true).toFilePath(windows: true);
-        print('TheUri is $TheUri --  ${fs.file(TheUri).existsSync()}');
+        print('TheUri is ${fs.file(TheUri).absolute} --  ${fs.file(TheUri).existsSync()}');
         print('Wrong way is is $packageManifestPath --  ${fs.file(packageManifestPath).existsSync()}');
+
+        print('Alternate way is packageResolve ${fs.file(packageResolve.toFilePath(windows: true)).existsSync()} ');
 
 
         final FlutterManifest packageFlutterManifest = await FlutterManifest.createFromPath(packageManifestPath);
