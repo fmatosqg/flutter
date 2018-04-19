@@ -377,21 +377,20 @@ flutter:
     }
 
     void writeSchemaFile(FileSystem filesystem, String schemaData) {
-      final schemaPath = buildSchemaPath(filesystem);
-      final schemaFile = filesystem.file(schemaPath);
+      final String schemaPath = buildSchemaPath(filesystem);
+      final File schemaFile = filesystem.file(schemaPath);
 
       if   (true) {
-        final schemaDir = buildSchemaDir(filesystem);
+        final String schemaDir = buildSchemaDir(filesystem);
 
         filesystem.directory(schemaDir).createSync(recursive: true);
         filesystem.file(schemaFile).writeAsStringSync(schemaData);
       }
     }
 
-    testUsingContextAndFs(String description, FileSystem filesystem,
+    void testUsingContextAndFs(String description, FileSystem filesystem,
         dynamic testMethod()) {
-
-      const schemaData = '{}';
+      const String schemaData = '{}';
 
       testUsingContext(description,
               () async {
@@ -410,7 +409,7 @@ flutter:
 
     testUsingContextAndFs('Validate manifest on Posix FS',
         new MemoryFileSystem(style: FileSystemStyle.posix), () async {
-          const schemaData = 'aaaaaa';
+//          const schemaData = 'aaaaaa';
 
           assertSchemaIsReadable();
         }
@@ -419,7 +418,7 @@ flutter:
 
     testUsingContextAndFs('Validate manifest on Windows FS',
         new MemoryFileSystem(style: FileSystemStyle.windows), () async {
-          const schemaData = 'aaaaaa';
+//          const schemaData = 'aaaaaa';
           assertSchemaIsReadable();
         }
     );

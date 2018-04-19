@@ -9,17 +9,16 @@ import '../base/file_system.dart';
 const String kPackagesFileName = '.packages';
 
 Map<String, Uri> _parse(String packagesPath) {
-
-  final uri = new Uri.file(packagesPath, windows: true);
-  print('Needs unit test, _parse(packagesPath) ${packagesPath}');
-  print('Needs unit test, uri of packagesPath  ${uri}');
+  final Uri uri = new Uri.file(packagesPath, windows: true);
+  print('Needs unit test, _parse(packagesPath) $packagesPath');
+  print('Needs unit test, uri of packagesPath  $uri');
 
 
 //  final uri = packagesPath.replaceAll('C:\\','/C:/').replaceAll(':','' );
 //  print('Uri is ${uri}, contents are \n${fs.file(packagesPath).readAsStringSync()}');
 //  final uri= packagesPath;
   final List<int> source = fs.file(packagesPath).readAsBytesSync();
-  final theMap = packages_file.parse(source,
+  final Map<dynamic, dynamic> theMap = packages_file.parse(source,
      uri );
 
   print('Needs unit test for map $theMap');
@@ -49,7 +48,7 @@ class PackageMap {
 
   Map<String, Uri> get map {
     load();
-    print('Package parsing gives ${_map}');
+    print('Package parsing gives $_map');
     return _map;
   }
   Map<String, Uri> _map;

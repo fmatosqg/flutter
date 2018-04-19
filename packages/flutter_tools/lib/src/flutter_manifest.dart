@@ -62,9 +62,9 @@ class FlutterManifest {
   }
 
   List<Uri> get assets {
-    dynamic assetsBefore = _flutterDescriptor['assets'];
-    print('Flutter assets before ${assetsBefore}');
-    List<Uri> list = _flutterDescriptor['assets']?.map(Uri.encodeFull)
+    final dynamic assetsBefore = _flutterDescriptor['assets'];
+    print('Flutter assets before $assetsBefore');
+    final List<Uri> list = _flutterDescriptor['assets']?.map(Uri.encodeFull)
         ?.map(Uri.parse)
         ?.toList() ?? const <Uri>[];
     print('Flutter assets after converting to uri $list');
@@ -176,15 +176,16 @@ String buildSchemaPath(FileSystem fs){
 Future<bool> _validate(Object manifest) async {
 
   final String schemaPath= buildSchemaPath(fs);
-  final toUri = fs.path.toUri(schemaPath).toString();
+//  final String toUri = fs.path.toUri(schemaPath).toString();
 
   Schema schema;
   if ( true ) {
     final String schemaData = fs.file(schemaPath).readAsStringSync();
     schema = await Schema.createSchema(
+        // ignore: deprecated_member_use
         convert.JSON.decode(schemaData));
-  } else {
-     schema = await Schema.createSchemaFromUrl(toUri);
+//  } else {
+//     schema = await Schema.createSchemaFromUrl(toUri);
   }
   final Validator validator = new Validator(schema);
   if (validator.validate(manifest)) {

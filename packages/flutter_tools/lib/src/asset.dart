@@ -147,8 +147,8 @@ class _ManifestAssetBundle implements AssetBundle {
       print('route to manifest is $packageManifestPath');
       print('package path is ${package.path}');
 
-      Uri packageResolve=package.resolve('../pubspec.yaml');
-      print('package resolve is ${packageResolve}');
+//      Uri packageResolve=package.resolve('../pubspec.yaml');
+//      print('package resolve is ${packageResolve}');
 
 
       if (package != null && package.scheme == 'file') {
@@ -157,11 +157,11 @@ class _ManifestAssetBundle implements AssetBundle {
         final String packageManifestPath = fs.path.fromUri(package.resolve('../pubspec.yaml'));
 
 //        print('Test 1 ${}');
-        final TheUri = new Uri.file('../pubspec.yaml', windows: true).toFilePath(windows: true);
-        print('TheUri is ${fs.file(TheUri).absolute} --  ${fs.file(TheUri).existsSync()}');
+//        final TheUri = new Uri.file('../pubspec.yaml', windows: true).toFilePath(windows: true);
+//        print('TheUri is ${fs.file(TheUri).absolute} --  ${fs.file(TheUri).existsSync()}');
         print('Wrong way is is $packageManifestPath --  ${fs.file(packageManifestPath).existsSync()}');
 
-        print('Alternate way is packageResolve ${fs.file(packageResolve.toFilePath(windows: true)).existsSync()} ');
+//        print('Alternate way is packageResolve ${fs.file(packageResolve.toFilePath(windows: true)).existsSync()} ');
 
 
         final FlutterManifest packageFlutterManifest = await FlutterManifest.createFromPath(packageManifestPath);
@@ -246,7 +246,7 @@ class _ManifestAssetBundle implements AssetBundle {
 
 bool isStyleableFSAndStyleIsWindows() {
   if (fs is StyleableFileSystem) {
-    final styleableFs = fs as StyleableFileSystem;
+    final StyleableFileSystem styleableFs = fs;
     if (styleableFs.style == FileSystemStyle.windows)
       return true;
   }
@@ -254,13 +254,13 @@ bool isStyleableFSAndStyleIsWindows() {
   return false;
 }
 
-String resolveRelativePath(String relativePath, {String basePath: null}) {
+String resolveRelativePath(String relativePath, {String basePath}) {
   return resolveRelativePathToUri(relativePath, basePath: basePath).toFilePath(
       windows: isStyleableFSAndStyleIsWindows());
 }
 
-Uri resolveRelativePathToUri(String relativePath, {String basePath: null}) {
-  var fullPath = relativePath;
+Uri resolveRelativePathToUri(String relativePath, {String basePath}) {
+  String fullPath = relativePath;
 
 
   if (basePath != null) {
@@ -634,7 +634,8 @@ void _parseAssetsFromFolder(PackageMap packageMap,
 //  final String fullPath = resolveRelativePath(assetUri)//fs.path.join(assetBase, assetUri.toString());
 //  var fullPath = assetBase
 
-  var fullPath = resolveRelativePath(assetUri.toString(), basePath: assetBase);
+  final String fullPath = resolveRelativePath(
+      assetUri.toString(), basePath: assetBase);
 
   print('Parse folder $fullPath -- base $assetBase');
   final List<FileSystemEntity> lister = fs.directory(fullPath)
@@ -647,7 +648,7 @@ void _parseAssetsFromFolder(PackageMap packageMap,
       //
       print('OMG relpath before $relPath');
 
-      Uri uri = new Uri.file(new Uri.file(relPath, windows: true)
+      final Uri uri = new Uri.file(new Uri.file(relPath, windows: true)
           .toFilePath()); // converts windows convention to bundle convention (same as posix)
 
       print('OMG relpath uri  $uri  -- ${uri.toFilePath()}');
@@ -686,23 +687,23 @@ void _parseAssetFromFile(PackageMap packageMap,
 
 //    final normalizedBaseDir = new Uri.file(
 //        asset.baseDir, windows: isStyleableFSAndStyleIsWindows());
-    var dir = fs
-        .directory(relativeUri)
-        .dirname;
-    var normalizedBaseDir = fs
-        .directory(dir)
-        .dirname;
-    final filenameWithoutPath = fs
-        .file(relativeUri.path)
-        .basename;
+//    final dir = fs
+//        .directory(relativeUri)
+//        .dirname;
+//    final normalizedBaseDir = fs
+//        .directory(dir)
+//        .dirname;
+//    final filenameWithoutPath = fs
+//        .file(relativeUri.path)
+//        .basename;
 
-    var assetEntry = '${asset
+    final String assetEntry = '${asset
         .symbolicPrefixUri}$relativeUri';
 //     Uri entryUri = new Uri.file(assetEntry);
 //     entryUri  = asset.symbolicPrefixUri.resolveUri(relativeUri);
-    print(
-        '_parseAssetFromFile 1 $path -- $normalizedBaseDir -- $filenameWithoutPath -- ');
-
+//    print(
+//        '_parseAssetFromFile 1 $path -- $normalizedBaseDir -- $filenameWithoutPath -- ');
+//
     print('_parseAssetFromFile 2 $path -- ${asset
         .baseDir} -- $relativeUri');
     print('_parseAssetFromFile 3 Entry uri -- ${asset

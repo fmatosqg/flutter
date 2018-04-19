@@ -40,9 +40,9 @@ flutter:
 //    final pathUri = fs.file(path).absolute;
 //    var pathUri = new Uri.file('../pubspec.yaml', windows: true).toFilePath(windows: true);
 
-    var pathUri = resolveRelativePath(path);
+    final String pathUri = resolveRelativePath(path);
 
-    var pathStr = fs.file(fs
+    final File pathStr = fs.file(fs
         .file(pathUri)
         .absolute);
 
@@ -543,18 +543,19 @@ $assetsSection
   group('AssetBundle assets from scanned paths with MemoryFileSystem', () {
     String readSchemaPath(FileSystem fs) {
       final String schemaPath = buildSchemaPath(fs);
-      final schemaFile = fs.file(schemaPath);
+      final File schemaFile = fs.file(schemaPath);
 
       return schemaFile.readAsStringSync();
 //      return "{}";
     }
 
-    writeSchema(String schema, FileSystem filesystem) {
+    void writeSchema(String schema, FileSystem filesystem) {
       final String schemaPath = buildSchemaPath(filesystem);
-      final schemaFile = filesystem.file(schemaPath);
+      final File schemaFile = filesystem.file(schemaPath);
 
       if (! schemaFile.existsSync()) {
-        final schemaDir = filesystem.directory(buildSchemaDir(filesystem));
+        final Directory schemaDir = filesystem.directory(
+            buildSchemaDir(filesystem));
 
 
         print('3333333333 schema dir is $schemaDir');
@@ -564,15 +565,15 @@ $assetsSection
         print('3333333333 schema file is written');
 
 
-        final String readSchema = filesystem.file(schemaPath)
-            .readAsStringSync();
+//        final String readSchema = filesystem.file(schemaPath)
+//            .readAsStringSync();
 //      print('3333333333 schema file is read $readSchema');
 
       }
 
     }
     //////////////////////////////////////
-    testUsingContextAndFs(String description, dynamic testMethod(),)  {
+    void testUsingContextAndFs(String description, dynamic testMethod(),) {
       final FileSystem windowsFs = new MemoryFileSystem(
           style: FileSystemStyle.windows);
 
