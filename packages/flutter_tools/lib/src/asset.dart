@@ -439,7 +439,14 @@ Future<DevFSContent> _obtainLicenses(
 
 DevFSContent _createAssetManifest(Map<_Asset, List<_Asset>> assetVariants) {
   final Map<String, List<String>> jsonObject = <String, List<String>>{};
-  for (_Asset main in assetVariants.keys) {
+
+  // necessary for making unit tests deterministic
+  final List<_Asset> sortedKeys = assetVariants
+      .keys.toList()
+    ..sort((_Asset a, _Asset b) =>
+        a.assetFile.basename.compareTo(b.assetFile.basename));
+
+  for (_Asset main in sortedKeys) {
     final List<String> variants = <String>[];
     for (_Asset variant in assetVariants[main])
       variants.add(variant.entryUri.path);
