@@ -634,7 +634,7 @@ Map<_Asset, List<_Asset>> _parseAssets(
 
 
 String _superSpecialAppend(String assetBase, Uri assetUri) {
-  final isWindows = assetBase.startsWith('C:\\');
+  final bool isWindows = assetBase.startsWith('C:\\');
 
   assert(assetBase != null, 'Cannot append route to null');
   String path;
@@ -666,7 +666,6 @@ void _parseAssetsFromFolder(PackageMap packageMap,
 //  final String fullPath = resolveRelativePath(assetUri)//fs.path.join(assetBase, assetUri.toString());
 //  var fullPath = assetBase
 
-  LocalFileSystem lfs;
   final Uri fullPathUri2 = resolveRelativePathToUri(
       assetUri.toFilePath(windows: isStyleableFSAndStyleIsWindows()), basePath: assetBase);
 
