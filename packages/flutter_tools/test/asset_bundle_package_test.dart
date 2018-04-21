@@ -70,7 +70,7 @@ $assetsSection
 
   void writePackagesFile(String packages) {
     final Uri uri = new Uri.file('.packages', windows: true);
-    final ddd = fs.file(uri);
+    final File ddd = fs.file(uri);
 
     print('Write packages to ${ddd.absolute} -- contents $packages');
     fs.file(uri)
