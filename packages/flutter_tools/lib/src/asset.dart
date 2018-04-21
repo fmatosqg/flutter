@@ -263,11 +263,8 @@ Uri resolveRelativePathToUri(String relativePath, {String basePath}) {
   String fullPath = relativePath;
 
 
-  if (basePath != null) {
-//    final separator = isStyleableFSAndStyleIsWindows() ? '/' : '/';
-//    var sanitizedBasePath = new Uri.file(basePath).toFilePath();
-
-    fullPath = '$basePath/$relativePath';
+  if (basePath != null ) {
+      fullPath = '$basePath/$relativePath';
   }
 
   print('Uri on MemFs the hardest code in the world $fullPath -- $basePath -- $relativePath ');
@@ -276,13 +273,14 @@ Uri resolveRelativePathToUri(String relativePath, {String basePath}) {
   if (isStyleableFSAndStyleIsWindows()) {
     pathUri = new Uri.file(fullPath, windows: true);
   } else {
-    pathUri =
-    new Uri.file(fullPath);
+    pathUri = new Uri.file(fullPath);
   }
 
-  return
-    pathUri
-  ;
+  final File ffff = fs.file(pathUri);
+  final Directory dddd = fs.directory(pathUri);
+
+  print('Uri on MemFs the hardest code in the world, result in -- ${ffff.absolute} -- exists ${ffff.existsSync()} --- dir exists ${dddd.existsSync()}');
+  return pathUri;
 }
 
 class _Asset {
@@ -532,14 +530,19 @@ class _AssetDirectoryCache {
 
   List<String> variantsFor(String assetPath) {
     final String assetName = fs.path.basename(assetPath);
-    final String directory = fs.path.dirname(assetPath);
+    final String directoryStr = new Uri.file(
+        fs.path.dirname(assetPath), windows: isStyleableFSAndStyleIsWindows())
+        .toFilePath(windows: isStyleableFSAndStyleIsWindows());
 
-    if (!fs.directory(directory).existsSync())
+    if (!fs.directory(directoryStr).existsSync())
       return const <String>[];
 
-    if (_cache[directory] == null) {
+    if (_cache[directoryStr] == null) {
       final List<String> paths = <String>[];
-      for (FileSystemEntity entity in fs.directory(directory).listSync(recursive: true)) {
+      print(
+          '_AssetDirectoryCache About to list all files within folder string $directoryStr');
+      for (FileSystemEntity entity in fs.directory(directoryStr).listSync(
+          recursive: true)) {
         final String path = entity.path;
         if (fs.isFileSync(path) && !_excluded.any((String exclude) => path.startsWith(exclude)))
           paths.add(path);
@@ -548,15 +551,15 @@ class _AssetDirectoryCache {
       final Map<String, List<String>> variants = <String, List<String>>{};
       for (String path in paths) {
         final String variantName = fs.path.basename(path);
-        if (directory == fs.path.dirname(path))
+        if (directoryStr == fs.path.dirname(path))
           continue;
         variants[variantName] ??= <String>[];
         variants[variantName].add(path);
       }
-      _cache[directory] = variants;
+      _cache[directoryStr] = variants;
     }
 
-    return _cache[directory][assetName] ?? const <String>[];
+    return _cache[directoryStr][assetName] ?? const <String>[];
   }
 }
 
