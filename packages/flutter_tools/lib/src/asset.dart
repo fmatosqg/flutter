@@ -633,6 +633,28 @@ Map<_Asset, List<_Asset>> _parseAssets(
 }
 
 
+String _superSpecialAppend(String assetBase, Uri assetUri) {
+  final isWindows = assetBase.startsWith('C:\\');
+
+  assert(assetBase != null, 'Cannot append route to null');
+  String path;
+  if (isWindows) {
+    final String windowsAssetUri = assetUri
+        .toFilePath(windows: true)
+        .replaceAll('/', '\\');
+
+    path = '$assetBase\\$windowsAssetUri';
+  } else {
+    path = '$assetBase/$assetUri';
+  }
+
+  print('+-+-+- super special append result is $path -- $assetBase -- ${fs
+      .file(assetUri)
+      .absolute}');
+
+  return path;
+}
+
 void _parseAssetsFromFolder(PackageMap packageMap,
     FlutterManifest flutterManifest,
     String assetBase,
@@ -644,13 +666,18 @@ void _parseAssetsFromFolder(PackageMap packageMap,
 //  final String fullPath = resolveRelativePath(assetUri)//fs.path.join(assetBase, assetUri.toString());
 //  var fullPath = assetBase
 
+  LocalFileSystem lfs;
   final Uri fullPathUri2 = resolveRelativePathToUri(
       assetUri.toFilePath(windows: isStyleableFSAndStyleIsWindows()), basePath: assetBase);
 
-  final String fullPath = fullPathUri2.toFilePath(windows: isStyleableFSAndStyleIsWindows());
+  String fullPath = fullPathUri2.toFilePath(
+      windows: isStyleableFSAndStyleIsWindows());
 //  new Uri.file(
 //      fs.path.dirname(assetPath), windows: isStyleableFSAndStyleIsWindows())
 //      .toFilePath(windows: isStyleableFSAndStyleIsWindows());
+
+  fullPath = _superSpecialAppend(assetBase, assetUri);
+
 
   print('+-+-+-+- Parse folder $fullPath -- base $assetBase');
   final List<FileSystemEntity> lister = fs.directory(fullPath)
@@ -675,6 +702,7 @@ void _parseAssetsFromFolder(PackageMap packageMap,
     }
   }
 }
+
 
 void _parseAssetFromFile(PackageMap packageMap,
     FlutterManifest flutterManifest,
