@@ -540,7 +540,7 @@ class _AssetDirectoryCache {
     if (_cache[directoryStr] == null) {
       final List<String> paths = <String>[];
       print(
-          '_AssetDirectoryCache About to list all files within folder string $directoryStr');
+          '+-+-+-+-  _AssetDirectoryCache About to list all files within folder string $directoryStr');
       for (FileSystemEntity entity in fs.directory(directoryStr).listSync(
           recursive: true)) {
         final String path = entity.path;
@@ -644,12 +644,17 @@ void _parseAssetsFromFolder(PackageMap packageMap,
 //  final String fullPath = resolveRelativePath(assetUri)//fs.path.join(assetBase, assetUri.toString());
 //  var fullPath = assetBase
 
-  final String fullPath = resolveRelativePath(
-      assetUri.toString(), basePath: assetBase);
+  final Uri fullPathUri2 = resolveRelativePathToUri(
+      assetUri.toFilePath(windows: isStyleableFSAndStyleIsWindows()), basePath: assetBase);
 
-  print('Parse folder $fullPath -- base $assetBase');
+  final String fullPath = fullPathUri2.toFilePath(windows: isStyleableFSAndStyleIsWindows());
+//  new Uri.file(
+//      fs.path.dirname(assetPath), windows: isStyleableFSAndStyleIsWindows())
+//      .toFilePath(windows: isStyleableFSAndStyleIsWindows());
+
+  print('+-+-+-+- Parse folder $fullPath -- base $assetBase');
   final List<FileSystemEntity> lister = fs.directory(fullPath)
-      .listSync(recursive: false, followLinks: false);
+      .listSync(recursive: false);
 
   for (FileSystemEntity entity in lister) {
     if (entity is File) {
