@@ -270,7 +270,7 @@ Uri resolveRelativePathToUri(String relativePath, {String basePath}) {
     fullPath = '$basePath/$relativePath';
   }
 
-  print('Uri on MemFs the hardest code in the world $fullPath');
+  print('Uri on MemFs the hardest code in the world $fullPath -- $basePath -- $relativePath ');
 
   Uri pathUri;
   if (isStyleableFSAndStyleIsWindows()) {

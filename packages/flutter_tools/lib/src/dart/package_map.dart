@@ -1,3 +1,4 @@
+import 'package:flutter_tools/src/globals.dart';
 // Copyright 2016 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -10,16 +11,27 @@ const String kPackagesFileName = '.packages';
 
 Map<String, Uri> _parse(String packagesPath) {
   final Uri uri = new Uri.file(packagesPath, windows: true);
-  print('Needs unit test, _parse(packagesPath) $packagesPath');
-  print('Needs unit test, uri of packagesPath  $uri');
+
+  var doesDirExist = fs.directory(fs.file(uri).dirname).existsSync();
+
+  print('Needs unit test, _parse(packagesPath) ${fs.file(packagesPath).absolute} -- exists ${fs.file(packagesPath).existsSync()}');
+  print('Needs unit test, uri of packagesPath  ${fs.file(uri).absolute} --- exists ${fs.file(uri).existsSync()} -- $doesDirExist');
+
 
 
 //  final uri = packagesPath.replaceAll('C:\\','/C:/').replaceAll(':','' );
 //  print('Uri is ${uri}, contents are \n${fs.file(packagesPath).readAsStringSync()}');
 //  final uri= packagesPath;
-  final List<int> source = fs.file(packagesPath).readAsBytesSync();
-  final Map<dynamic, dynamic> theMap = packages_file.parse(source,
-     uri );
+
+  Map<dynamic, dynamic> theMap;
+  if ( fs.file(uri).existsSync()) {
+    final List<int> source = fs.file(uri).readAsBytesSync();
+      theMap = packages_file.parse(source,
+        uri);
+  }else {
+    printError('Cannot find .packages file');
+    theMap= <dynamic,dynamic>{};
+  }
 
   print('Needs unit test for map $theMap');
 

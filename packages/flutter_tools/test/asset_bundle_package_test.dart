@@ -69,9 +69,15 @@ $assetsSection
   }
 
   void writePackagesFile(String packages) {
-    fs.file('.packages')
+    final Uri uri = new Uri.file('.packages', windows: true);
+    final ddd = fs.file(uri);
+
+    print('Write packages to ${ddd.absolute} -- contents $packages');
+    fs.file(uri)
       ..createSync()
       ..writeAsStringSync(packages);
+
+    print('Is .packages created -- ${ddd.existsSync()} (${ddd.absolute})');
   }
 
   Future<Null> buildAndVerifyAssets(
@@ -580,6 +586,16 @@ $assetsSection
       final FileSystem posixFs = new MemoryFileSystem(
           style: FileSystemStyle.posix);
 
+//      fs.currentDirectory = fs.directory('random')
+//        ..createSync(recursive: true);
+
+//       = 'random1';
+//      windowsFs.currentDirectory.createSync(recursive: true);
+
+//      posixFs.currentDirectory = 'random2';
+//      posixFs.currentDirectory.createSync(recursive: true);
+
+
       establishFlutterRoot();
 
 
@@ -588,7 +604,7 @@ $assetsSection
       testUsingContext('$description - on windows FS', () async {
         establishFlutterRoot();
         writeSchema(schema, windowsFs);
-        testMethod();
+        await testMethod();
       },
           overrides: <Type, Generator>{
             FileSystem: () => windowsFs
@@ -597,7 +613,7 @@ $assetsSection
       testUsingContext('$description - on posix FS', () async {
         establishFlutterRoot();
         writeSchema(schema, posixFs);
-        testMethod();
+        await testMethod();
       },
           overrides: <Type, Generator>{
             FileSystem: () => posixFs
@@ -606,8 +622,8 @@ $assetsSection
 
       testUsingContext('$description - on original FS', () async {
         establishFlutterRoot();
-        writeSchema(schema, fs);
-        testMethod();
+//        writeSchema(schema, fs);
+        await testMethod();
       });
     }
 
@@ -636,6 +652,34 @@ $assetsSection
 
       await buildAndVerifyAssets(
         assetsOnDisk,
+        <String>['test_package'],
+        expectedAssetManifest,
+      );
+    });
+
+    testUsingContextAndFs(
+        'No asset is bundled with variant, no assets or directories are listed', () async {
+      establishFlutterRoot();
+
+
+      writePubspecFile('pubspec.yaml', 'test');
+      writePackagesFile('test_package:p/p/lib/');
+
+      final List<String> assetsOnDisk = <String>['a/foo', 'a/b/foo'];
+      final List<String> assetOnManifest = <String>[];
+
+      writePubspecFile(
+        'p/p/pubspec.yaml',
+        'test_package',
+        assets: assetOnManifest,
+      );
+
+      writeAssets('p/p/', assetsOnDisk);
+      const String expectedAssetManifest =
+          '{}';
+
+      await buildAndVerifyAssets(
+        assetOnManifest,
         <String>['test_package'],
         expectedAssetManifest,
       );
