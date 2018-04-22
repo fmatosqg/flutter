@@ -20,6 +20,7 @@ class FlutterManifest {
   static Future<FlutterManifest> createFromPath(String path) async {
     if (path == null || !fs.isFileSync(path)) {
       print('Cannot find manifest at $path');
+//      throw new Exception('Cannot find manifest at $path');
       return _createFromYaml(null);
     }
     final String manifest = await fs.file(path).readAsString();

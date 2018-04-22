@@ -143,7 +143,19 @@ class _ManifestAssetBundle implements AssetBundle {
       final Uri package = packageMap.map[packageName];
 
       print('ppppppppp package $package ---- ${package.scheme}');
-      final String packageManifestPath = fs.path.fromUri(package.resolve('../pubspec.yaml'));
+//      final String packageResolve = _superSpecialAppend(assetBasePath, '../pubspec.yaml');
+
+      final Uri packageResolve = resolveRelativePathToUri('../pubspec.yaml', basePath: assetBasePath);
+//        Uri packageResolve=package.resolve('../pubspec.yaml');
+
+//      if ( packageResolve.scheme != 'file'){
+//        packageResolve  =
+//      }
+
+
+      assert(packageResolve.scheme == 'file', 'Expected scheme file but found ${packageResolve.scheme}');
+      print('Package resolve is $packageResolve');
+      final String packageManifestPath = fs.path.fromUri(packageResolve);
       print('route to manifest is $packageManifestPath');
       print('package path is ${package.path}');
 
@@ -676,7 +688,7 @@ void _parseAssetsFromFolder(PackageMap packageMap,
 //      .toFilePath(windows: isStyleableFSAndStyleIsWindows());
 
   fullPath = _superSpecialAppend(assetBase, assetUri);
-
+//fs.path.relative(fullPath)
 
   print('+-+-+-+- Parse folder $fullPath -- base $assetBase');
   final List<FileSystemEntity> lister = fs.directory(fullPath)
