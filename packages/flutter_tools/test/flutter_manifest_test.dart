@@ -7,10 +7,6 @@ import 'package:test/test.dart';
 
 import 'src/common.dart';
 import 'src/context.dart';
-// Copyright 2017 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 
 void main() {
   setUpAll(() {
@@ -409,16 +405,12 @@ flutter:
 
     testUsingContextAndFs('Validate manifest on Posix FS',
         new MemoryFileSystem(style: FileSystemStyle.posix), () async {
-//          const schemaData = 'aaaaaa';
-
           assertSchemaIsReadable();
         }
     );
 
-
     testUsingContextAndFs('Validate manifest on Windows FS',
         new MemoryFileSystem(style: FileSystemStyle.windows), () async {
-//          const schemaData = 'aaaaaa';
           assertSchemaIsReadable();
         }
     );

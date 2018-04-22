@@ -36,10 +36,6 @@ flutter:
       assetsSection = buffer.toString();
     }
 
-//    final pathUri =new Uri.directory(Cache.flutterRoot,windows: true);
-//    final pathUri = fs.file(path).absolute;
-//    var pathUri = new Uri.file('../pubspec.yaml', windows: true).toFilePath(windows: true);
-
     final String pathUri = resolveRelativePath(path);
 
     final File pathStr = fs.file(fs
@@ -47,8 +43,6 @@ flutter:
         .absolute);
 
     print('Pubspec creation uri $pathUri -- $pathStr');
-//path=pathStr;
-//    print('Pubspec created at path $path -- ${fs.file(path).absolute}');
     fs.file(pathStr)
       ..createSync(recursive: true)
       ..writeAsStringSync('''
@@ -552,7 +546,6 @@ $assetsSection
       final File schemaFile = fs.file(schemaPath);
 
       return schemaFile.readAsStringSync();
-//      return "{}";
     }
 
     void writeSchema(String schema, FileSystem filesystem) {
@@ -570,11 +563,6 @@ $assetsSection
         schemaFile.writeAsStringSync(schema);
         print('3333333333 schema file is written');
 
-
-//        final String readSchema = filesystem.file(schemaPath)
-//            .readAsStringSync();
-//      print('3333333333 schema file is read $readSchema');
-
       }
 
     }
@@ -585,16 +573,6 @@ $assetsSection
 
       final FileSystem posixFs = new MemoryFileSystem(
           style: FileSystemStyle.posix);
-
-//      fs.currentDirectory = fs.directory('random')
-//        ..createSync(recursive: true);
-
-//       = 'random1';
-//      windowsFs.currentDirectory.createSync(recursive: true);
-
-//      posixFs.currentDirectory = 'random2';
-//      posixFs.currentDirectory.createSync(recursive: true);
-
 
       establishFlutterRoot();
 
@@ -609,7 +587,7 @@ $assetsSection
           overrides: <Type, Generator>{
             FileSystem: () => windowsFs
           });
-//
+
       testUsingContext('$description - on posix FS', () async {
         establishFlutterRoot();
         writeSchema(schema, posixFs);
@@ -622,7 +600,6 @@ $assetsSection
 
       testUsingContext('$description - on original FS', () async {
         establishFlutterRoot();
-//        writeSchema(schema, fs);
         await testMethod();
       });
     }
@@ -686,6 +663,4 @@ $assetsSection
     });
 
   });
-
-
 }

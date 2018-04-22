@@ -115,7 +115,6 @@ class _ManifestAssetBundle implements AssetBundle {
 
     _lastBuildTimestamp = new DateTime.now();
 
-    print('Begin package problem here $packagesPath');
     final PackageMap packageMap = new PackageMap(packagesPath);
 
     // The _assetVariants map contains an entry for each asset listed
@@ -143,15 +142,7 @@ class _ManifestAssetBundle implements AssetBundle {
       final Uri package = packageMap.map[packageName];
 
       print('ppppppppp package $package ---- ${package.scheme}');
-//      final String packageResolve = _superSpecialAppend(assetBasePath, '../pubspec.yaml');
-
       final Uri packageResolve = resolveRelativePathToUri('../pubspec.yaml', basePath: assetBasePath);
-//        Uri packageResolve=package.resolve('../pubspec.yaml');
-
-//      if ( packageResolve.scheme != 'file'){
-//        packageResolve  =
-//      }
-
 
       assert(packageResolve.scheme == 'file', 'Expected scheme file but found ${packageResolve.scheme}');
       print('Package resolve is $packageResolve');
@@ -159,22 +150,10 @@ class _ManifestAssetBundle implements AssetBundle {
       print('route to manifest is $packageManifestPath');
       print('package path is ${package.path}');
 
-//      Uri packageResolve=package.resolve('../pubspec.yaml');
-//      print('package resolve is ${packageResolve}');
-
-
       if (package != null && package.scheme == 'file') {
 
 
         final String packageManifestPath = fs.path.fromUri(package.resolve('../pubspec.yaml'));
-
-//        print('Test 1 ${}');
-//        final TheUri = new Uri.file('../pubspec.yaml', windows: true).toFilePath(windows: true);
-//        print('TheUri is ${fs.file(TheUri).absolute} --  ${fs.file(TheUri).existsSync()}');
-        print('Wrong way is is $packageManifestPath --  ${fs.file(packageManifestPath).existsSync()}');
-
-//        print('Alternate way is packageResolve ${fs.file(packageResolve.toFilePath(windows: true)).existsSync()} ');
-
 
         final FlutterManifest packageFlutterManifest = await FlutterManifest.createFromPath(packageManifestPath);
         print('Found package manifest at $packageManifestPath');
@@ -212,10 +191,6 @@ class _ManifestAssetBundle implements AssetBundle {
       if (!asset.assetFileExists && assetVariants[asset].isEmpty) {
         printStatus('Error detected in pubspec.yaml:', emphasis: true);
         printError('No file or variants found for $asset.\n');
-
-        if ( fs.directory(asset.assetFile).existsSync()){
-          printError('Folders to be scanned for assets must end in /');
-        }
         return 1;
       }
       // The file name for an asset's "main" entry is whatever appears in
@@ -551,8 +526,7 @@ class _AssetDirectoryCache {
 
     if (_cache[directoryStr] == null) {
       final List<String> paths = <String>[];
-      print(
-          '+-+-+-+-  _AssetDirectoryCache About to list all files within folder string $directoryStr');
+      print('+-+-+-+-  _AssetDirectoryCache About to list all files within folder string $directoryStr');
       for (FileSystemEntity entity in fs.directory(directoryStr).listSync(
           recursive: true)) {
         final String path = entity.path;
@@ -675,20 +649,17 @@ void _parseAssetsFromFolder(PackageMap packageMap,
     Uri assetUri,
     { List<String> excludeDirs: const <String>[],
       String packageName}) {
-//  final String fullPath = resolveRelativePath(assetUri)//fs.path.join(assetBase, assetUri.toString());
-//  var fullPath = assetBase
 
   final Uri fullPathUri2 = resolveRelativePathToUri(
       assetUri.toFilePath(windows: isStyleableFSAndStyleIsWindows()), basePath: assetBase);
 
+  assert (fs.directory(fullPathUri2)
+      .existsSync(), 'Cannot find directory $fullPathUri2');
+
   String fullPath = fullPathUri2.toFilePath(
       windows: isStyleableFSAndStyleIsWindows());
-//  new Uri.file(
-//      fs.path.dirname(assetPath), windows: isStyleableFSAndStyleIsWindows())
-//      .toFilePath(windows: isStyleableFSAndStyleIsWindows());
 
   fullPath = _superSpecialAppend(assetBase, assetUri);
-//fs.path.relative(fullPath)
 
   print('+-+-+-+- Parse folder $fullPath -- base $assetBase');
   final List<FileSystemEntity> lister = fs.directory(fullPath)
@@ -698,7 +669,6 @@ void _parseAssetsFromFolder(PackageMap packageMap,
     if (entity is File) {
       String relPath = fs.path.relative(entity.path, from: assetBase);
 
-      //
       print('OMG relpath before $relPath');
 
       final Uri uri = new Uri.file(new Uri.file(relPath, windows: true)
@@ -738,26 +708,8 @@ void _parseAssetFromFile(PackageMap packageMap,
         ? relativeUri
         : asset.symbolicPrefixUri.resolveUri(relativeUri);
 
-
-//    final normalizedBaseDir = new Uri.file(
-//        asset.baseDir, windows: isStyleableFSAndStyleIsWindows());
-//    final dir = fs
-//        .directory(relativeUri)
-//        .dirname;
-//    final normalizedBaseDir = fs
-//        .directory(dir)
-//        .dirname;
-//    final filenameWithoutPath = fs
-//        .file(relativeUri.path)
-//        .basename;
-
     final String assetEntry = '${asset
         .symbolicPrefixUri}$relativeUri';
-//     Uri entryUri = new Uri.file(assetEntry);
-//     entryUri  = asset.symbolicPrefixUri.resolveUri(relativeUri);
-//    print(
-//        '_parseAssetFromFile 1 $path -- $normalizedBaseDir -- $filenameWithoutPath -- ');
-//
     print('_parseAssetFromFile 2 $path -- ${asset
         .baseDir} -- $relativeUri');
     print('_parseAssetFromFile 3 Entry uri -- ${asset
