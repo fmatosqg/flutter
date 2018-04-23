@@ -10,6 +10,8 @@ const String kPackagesFileName = '.packages';
 
 Map<String, Uri> _parse(String packagesPath) {
   final List<int> source = fs.file(packagesPath).readAsBytesSync();
+  // FABIO 1: Code review note: reverting this line makes test fail (MemoryFileSystem on windows style)
+  print('URI needs windows parameter: ${ new Uri.file(packagesPath,windows: false)} -- ${ new Uri.file(packagesPath,windows: true)}');
   return packages_file.parse(source, new Uri.file(packagesPath,windows: true));
 }
 

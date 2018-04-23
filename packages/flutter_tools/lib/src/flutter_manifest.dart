@@ -60,13 +60,7 @@ class FlutterManifest {
   }
 
   List<Uri> get assets {
-    final dynamic assetsBefore = _flutterDescriptor['assets'];
-    print('Flutter assets before $assetsBefore');
-    final List<Uri> list = _flutterDescriptor['assets']?.map(Uri.encodeFull)
-        ?.map(Uri.parse)
-        ?.toList() ?? const <Uri>[];
-    print('Flutter assets after converting to uri $list');
-    return list;
+    return _flutterDescriptor['assets']?.map(Uri.encodeFull)?.map(Uri.parse)?.toList() ?? const <Uri>[];
   }
 
   List<Font> _fonts;
@@ -158,15 +152,17 @@ class FontAsset {
   String toString() => '$runtimeType(asset: ${assetUri.path}, weight; $weight, style: $style)';
 }
 
-
+// needs to be accessed by unit tests, there's an annotation for that
 String buildSchemaDir(FileSystem fs){
   return fs.path.join(
     fs.path.absolute(Cache.flutterRoot), 'packages', 'flutter_tools', 'schema',
   );
 }
+
+// needs to be accessed by unit tests, there's an annotation for that
 String buildSchemaPath(FileSystem fs){
   return fs.path.join(
-    fs.path.absolute(Cache.flutterRoot), 'packages', 'flutter_tools', 'schema',
+    fs.path.absolute(buildSchemaDir(fs)),
     'pubspec_yaml.json',
   );
 }
@@ -174,9 +170,10 @@ String buildSchemaPath(FileSystem fs){
 Future<bool> _validate(Object manifest) async {
   final String schemaPath = buildSchemaPath(fs);
 
-  Schema schema;
+  // FABIO 2: must replace [Schema.createSchemaFromUrl] because it uses [File]
+  // and can't read from fs object when it's not LocalFileSystem
   final String schemaData = fs.file(schemaPath).readAsStringSync();
-  schema = await Schema.createSchema(
+  final Schema schema = await Schema.createSchema(
       convert.json.decode(schemaData));
   final Validator validator = new Validator(schema);
   if (validator.validate(manifest)) {
