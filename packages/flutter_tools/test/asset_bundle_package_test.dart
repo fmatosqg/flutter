@@ -662,5 +662,40 @@ $assetsSection
       );
     });
 
+    testUsingContextAndFs(
+        'Expect error generating manifest, wrong non-existing directory is listed', () async {
+      establishFlutterRoot();
+
+
+      writePubspecFile('pubspec.yaml', 'test');
+      writePackagesFile('test_package:p/p/lib/');
+
+      final List<String> assetOnManifest = <String>['c/'];
+
+      writePubspecFile(
+        'p/p/pubspec.yaml',
+        'test_package',
+        assets: assetOnManifest,
+      );
+
+
+      try {
+        await buildAndVerifyAssets(
+          assetOnManifest,
+          <String>['test_package'],
+          null,
+        );
+
+        final Function watchdog = () async {
+          assert(false, 'Code failed to detect missing directory. Test failed.');
+        };
+        watchdog();
+      } catch (e) {
+        print('Test successful');
+      }
+
+    });
+
+
   });
 }
