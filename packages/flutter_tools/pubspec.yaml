@@ -33,6 +33,8 @@ dependencies:
   web_socket_channel: 1.0.7
   xml: 3.0.0
   yaml: 2.1.13
+  code_builder: 3.0.3
+  dart_style: 1.0.12
 
   # We depend on very specific internal implementation details of the
   # 'test' package, which change between versions, so when upgrading

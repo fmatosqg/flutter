@@ -5,6 +5,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:code_builder/code_builder.dart';
+import 'package:dart_style/dart_style.dart';
 import 'package:yaml/yaml.dart';
 
 import 'base/context.dart';
@@ -15,6 +17,10 @@ import 'dart/package_map.dart';
 import 'devfs.dart';
 import 'flutter_manifest.dart';
 import 'globals.dart';
+//import 'dart:io';
+
+//import 'package:path/path.dart' as path;
+
 
 const AssetBundleFactory _kManifestFactory = const _ManifestAssetBundleFactory();
 
@@ -130,6 +136,8 @@ class _ManifestAssetBundle implements AssetBundle {
     if (assetVariants == null)
       return 1;
 
+    _generateAccessorClass(assetVariants);
+
     final List<Map<String, dynamic>> fonts = _parseFonts(
       flutterManifest,
       includeDefaultFonts,
@@ -211,6 +219,82 @@ class _ManifestAssetBundle implements AssetBundle {
 
     return 0;
   }
+}
+
+String _capitalize(String s) =>
+    s[0].toUpperCase() + s.substring(1).toLowerCase();
+
+String _fieldName(String basename) {
+  String fieldName = basename;
+  fieldName = fieldName.replaceAll('-', '_');
+  fieldName = fieldName.replaceAll('.', '_');
+  fieldName = fieldName.replaceAll(' ', '_');
+  fieldName = fieldName.replaceAll('__', '_');
+
+  final List<String> words = fieldName.split('_');
+
+  String firstWord = words.removeAt(0).toLowerCase();
+  if (!firstWord.startsWith(new RegExp(r'[a-z]'))) {
+    firstWord = '_$firstWord';
+  }
+  final StringBuffer stringBuffer = new StringBuffer(firstWord);
+
+  for (String w in words) {
+    stringBuffer.write(_capitalize(w));
+  }
+
+  return stringBuffer.toString();
+}
+
+Future<Null> _generateAccessorClass(
+    Map<_Asset, List<_Asset>> assetVariants) async {
+  final DartFormatter _dartfmt = new DartFormatter();
+
+  String animalClass() {
+    final animal = new Class((b) {
+      b
+        ..name = 'AppAssets'
+//      ..extend = refer('Organism')
+        ..methods.add(new Method.returnsVoid((b) =>
+        b
+          ..name = 'eat'
+          ..body = refer('print')
+              .call([literalString('Yum!')])
+              .code));
+
+      for (_Asset asset in assetVariants.keys) {
+        final String assetBasename = fs.path.basename(asset.relativeUri.path);
+
+        final Field assetField = new Field((FieldBuilder fieldBuilder) {
+          final Code code = new Code('\'${asset.relativeUri}\'');
+          fieldBuilder
+            ..name = _fieldName(assetBasename)
+            ..type = const Reference('String')
+            ..static = true
+            ..assignment = code
+            ..modifier = FieldModifier.constant;
+        });
+        b.fields.add(assetField);
+      }
+    }
+    );
+
+    return _dartfmt.format('${animal.accept(new DartEmitter())}');
+  }
+
+
+  print('Generate code ${animalClass()}');
+
+  const String folder = 'lib/gen/';
+  const String partialPath = 'assetHolder.g.dart';
+
+  final Directory dir = fs.directory(folder);
+  dir.createSync(recursive: true);
+  final File file = fs.file('$folder$partialPath');
+
+  await file.writeAsString(animalClass());
+
+  print('File created: ${file.absolute}');
 }
 
 class _Asset {
@@ -581,3 +665,4 @@ _Asset _resolvePackageAsset(Uri assetUri, PackageMap packageMap) {
   printError('Could not resolve package for asset $assetUri.\n');
   return null;
 }
+
