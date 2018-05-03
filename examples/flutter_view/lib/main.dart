@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_view/gen/assetHolder.g.dart';
 
 void main() {
   runApp(new FlutterView());
@@ -68,7 +70,9 @@ class _MyHomePageState extends State<MyHomePage> {
             padding: const EdgeInsets.only(bottom: 15.0, left: 5.0),
             child: new Row(
               children: <Widget>[
-                new Image.asset('assets/flutter-mark-square-64.png', scale: 1.5),
+//                fff
+//                new Image.asset('assets/flutter-mark-square-64.png', scale: 1.5),
+                                new Image.asset(AppAssets.flutterMarkSquare64Png, scale: 1.5),
                 const Text('Flutter', style: const TextStyle(fontSize: 30.0)),
               ],
             ),

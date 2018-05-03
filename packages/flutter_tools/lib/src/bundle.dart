@@ -51,7 +51,18 @@ Future<void> build({
   applicationKernelFilePath ??= defaultApplicationKernelPath;
   File snapshotFile;
 
-  if (!precompiledSnapshot && !previewDart2) {
+
+final AssetBundle assets = await buildAssets(
+manifestPath: manifestPath,
+assetDirPath: assetDirPath,
+packagesPath: packagesPath,
+reportLicensedPackages: reportLicensedPackages,
+);
+if (assets == null)
+throwToolExit('Error building assets', exitCode: 1);
+
+
+if (!precompiledSnapshot && !previewDart2) {
     ensureDirectoryExists(snapshotPath);
 
     // In a precompiled snapshot, the instruction buffer contains script
@@ -136,15 +147,6 @@ Future<void> build({
     await fs.directory(getBuildDirectory()).childFile('frontend_server.d')
         .writeAsString('frontend_server.d: ${artifacts.getArtifactPath(Artifact.frontendServerSnapshotForEngineDartSdk)}\n');
   }
-
-  final AssetBundle assets = await buildAssets(
-    manifestPath: manifestPath,
-    assetDirPath: assetDirPath,
-    packagesPath: packagesPath,
-    reportLicensedPackages: reportLicensedPackages,
-  );
-  if (assets == null)
-    throwToolExit('Error building assets', exitCode: 1);
 
   await assemble(
     assetBundle: assets,

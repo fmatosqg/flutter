@@ -98,6 +98,7 @@ class _ManifestAssetBundle implements AssetBundle {
     bool includeDefaultFonts: true,
     bool reportLicensedPackages: false
   }) async {
+//    throw new Exception('Debugging stack trace');
     assetDirPath ??= getAssetBuildDirectory();
     packagesPath ??= fs.path.absolute(PackageMap.globalPackagesPath);
     FlutterManifest flutterManifest;
