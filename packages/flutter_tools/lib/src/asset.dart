@@ -98,7 +98,6 @@ class _ManifestAssetBundle implements AssetBundle {
     bool includeDefaultFonts: true,
     bool reportLicensedPackages: false
   }) async {
-//    throw new Exception('Debugging stack trace');
     assetDirPath ??= getAssetBuildDirectory();
     packagesPath ??= fs.path.absolute(PackageMap.globalPackagesPath);
     FlutterManifest flutterManifest;
@@ -223,7 +222,12 @@ class _ManifestAssetBundle implements AssetBundle {
 }
 
 String _capitalize(String s) =>
-    s[0].toUpperCase() + s.substring(1).toLowerCase();
+    s[0].toUpperCase() + s.substring(1);
+
+String _unCapitalize(String s) =>
+    s[0].toLowerCase() + s.substring(1);
+
+
 
 String _fieldName(String basename) {
   String fieldName = basename;
@@ -234,7 +238,7 @@ String _fieldName(String basename) {
 
   final List<String> words = fieldName.split('_');
 
-  String firstWord = words.removeAt(0).toLowerCase();
+  String firstWord = _unCapitalize(words.removeAt(0));
   if (!firstWord.startsWith(new RegExp(r'[a-z]'))) {
     firstWord = '_$firstWord';
   }
@@ -263,11 +267,15 @@ Future<Null> _generateAccessorClass(
               .call([literalString('Yum!')])
               .code));
 
+      // TODO find repeated names and disambiguate
+      // TODO sort alphabetically
+      // TODO eliminate all non-alphanumeric chars including latin diacrytics and unicode (or simply skip them?)
       for (_Asset asset in assetVariants.keys) {
         final String assetBasename = fs.path.basename(asset.relativeUri.path);
 
         final Field assetField = new Field((FieldBuilder fieldBuilder) {
-          final Code code = new Code('\'${asset.relativeUri}\'');
+          final Code code = new Code(
+              '\'${asset.entryUri.toFilePath(windows: false)}\'');
           fieldBuilder
             ..name = _fieldName(assetBasename)
             ..type = const Reference('String')
@@ -276,6 +284,13 @@ Future<Null> _generateAccessorClass(
             ..modifier = FieldModifier.constant;
         });
         b.fields.add(assetField);
+
+        b
+//          ..name = 'test'
+          ..docs.addAll(
+            [
+              '/// My favorite class. $asset',
+            ],);
       }
     }
     );
