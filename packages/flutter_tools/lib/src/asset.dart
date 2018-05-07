@@ -17,10 +17,6 @@ import 'dart/package_map.dart';
 import 'devfs.dart';
 import 'flutter_manifest.dart';
 import 'globals.dart';
-//import 'dart:io';
-
-//import 'package:path/path.dart' as path;
-
 
 const AssetBundleFactory _kManifestFactory = const _ManifestAssetBundleFactory();
 
@@ -258,48 +254,76 @@ Future<Null> _generateAccessorClass(
   String animalClass() {
     final animal = new Class((b) {
       b
-        ..name = 'AppAssets'
-//      ..extend = refer('Organism')
-        ..methods.add(new Method.returnsVoid((b) =>
-        b
-          ..name = 'eat'
-          ..body = refer('print')
-              .call([literalString('Yum!')])
-              .code));
+        ..name = 'AppAssets';
+
+      b
+        ..methods.add(new Method((MethodBuilder builder) {
+          builder
+            ..name = 'tre'
+            ..lambda = true
+            ..type = MethodType.getter
+            ..body = const Code("'hello'");
+        })
+        );
 
       // TODO find repeated names and disambiguate
       // TODO sort alphabetically
       // TODO eliminate all non-alphanumeric chars including latin diacrytics and unicode (or simply skip them?)
+
+      final List<String> comments = [
+        '/// Auto generated code, edited changes will be overwritten.',
+        "/// It's not necessary to commit this file to git, but it won't cause any problems either.",
+        '///',
+      ];
+
+      final Map assetMap = <String, _Asset>{};
       for (_Asset asset in assetVariants.keys) {
-        final String assetBasename = fs.path.basename(asset.relativeUri.path);
+        final String assetBasename = _fieldName(
+            fs.path.basename(asset.relativeUri.path));
+
+        if (assetMap.containsKey(assetBasename)) {
+          printError('Found 2 asset keys with the same name, skip ${asset.entryUri}');
+          comments.add(
+              '/// Conflict with key $assetBasename -- Skip code generation for asset ${asset
+                  .entryUri} ');
+          final _Asset previousEntry = assetMap[assetBasename];
+          if (previousEntry != null) {
+            printError('Erasing 1st asset key ${asset.entryUri}');
+            comments.add(
+                '/// Conflict with key $assetBasename -- Skip code generation for asset ${previousEntry
+                    .entryUri} ');
+          } else {
+
+            assetMap[assetBasename] = null;
+          }
+        } else {
+          assetMap[assetBasename] = asset;
+        }
+      }
+
+      b
+        ..docs.addAll(comments,);
+
+      for (String assetBasename in assetMap.keys) {
+        final _Asset asset = assetMap[assetBasename];
 
         final Field assetField = new Field((FieldBuilder fieldBuilder) {
           final Code code = new Code(
               '\'${asset.entryUri.toFilePath(windows: false)}\'');
           fieldBuilder
-            ..name = _fieldName(assetBasename)
+            ..name = assetBasename
             ..type = const Reference('String')
             ..static = true
             ..assignment = code
             ..modifier = FieldModifier.constant;
         });
         b.fields.add(assetField);
-
-        b
-//          ..name = 'test'
-          ..docs.addAll(
-            [
-              '/// My favorite class. $asset',
-            ],);
       }
     }
     );
 
     return _dartfmt.format('${animal.accept(new DartEmitter())}');
   }
-
-
-  print('Generate code ${animalClass()}');
 
   const String folder = 'lib/gen/';
   const String partialPath = 'assetHolder.g.dart';
@@ -310,7 +334,7 @@ Future<Null> _generateAccessorClass(
 
   await file.writeAsString(animalClass());
 
-  print('File created: ${file.absolute}');
+  printStatus('File created: ${file.absolute}');
 }
 
 class _Asset {
