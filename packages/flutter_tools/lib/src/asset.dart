@@ -7,6 +7,7 @@ import 'dart:convert';
 
 import 'package:code_builder/code_builder.dart';
 import 'package:dart_style/dart_style.dart';
+import 'package:meta/meta.dart';
 import 'package:yaml/yaml.dart';
 
 import 'base/context.dart';
@@ -217,20 +218,35 @@ class _ManifestAssetBundle implements AssetBundle {
   }
 }
 
-String _capitalize(String s) =>
-    s[0].toUpperCase() + s.substring(1);
+String _capitalize(String s) {
+  if (s.length > 1) {
+    return s[0].toUpperCase() + s.substring(1);
+  } else {
+    return s.toUpperCase();
+  }
+}
 
-String _unCapitalize(String s) =>
-    s[0].toLowerCase() + s.substring(1);
+String _unCapitalize(String s) {
+
+  if (s.length>1) {
+    return s[0].toLowerCase() + s.substring(1);
+  } else {
+    return s.toLowerCase();
+  }
+}
 
 
+@visibleForTesting
+String fieldName(String basename) {
+  final List<String> fragmentList = basename.split('.');
+  if (fragmentList.length > 1) {
+    fragmentList.removeLast();
+  }
 
-String _fieldName(String basename) {
-  String fieldName = basename;
-  fieldName = fieldName.replaceAll('-', '_');
-  fieldName = fieldName.replaceAll('.', '_');
-  fieldName = fieldName.replaceAll(' ', '_');
-  fieldName = fieldName.replaceAll('__', '_');
+  final String fieldName = fragmentList
+      .join('_')
+      .replaceAll(' ', '_')
+      .replaceAll(new RegExp(r'[^\w]+'), '');
 
   final List<String> words = fieldName.split('_');
 
@@ -252,34 +268,24 @@ Future<Null> _generateAccessorClass(
   final DartFormatter _dartfmt = new DartFormatter();
 
   String animalClass() {
-    final animal = new Class((b) {
+    final Class animal = new Class((ClassBuilder b) {
       b
         ..name = 'AppAssets';
-
-      b
-        ..methods.add(new Method((MethodBuilder builder) {
-          builder
-            ..name = 'tre'
-            ..lambda = true
-            ..type = MethodType.getter
-            ..body = const Code("'hello'");
-        })
-        );
 
       // TODO find repeated names and disambiguate
       // TODO sort alphabetically
       // TODO eliminate all non-alphanumeric chars including latin diacrytics and unicode (or simply skip them?)
 
-      final List<String> comments = [
+      final List<String> comments = <String>[
         '/// Auto generated code, edited changes will be overwritten.',
         "/// It's not necessary to commit this file to git, but it won't cause any problems either.",
         '///',
       ];
 
-      final Map assetMap = <String, _Asset>{};
+      final Map<String, _Asset> assetMap = <String, _Asset>{};
       for (_Asset asset in assetVariants.keys) {
-        final String assetBasename = _fieldName(
-            fs.path.basename(asset.relativeUri.path));
+        final String assetBasename = fieldName(
+            fs.path.basename(asset.relativeUri.toFilePath(windows: false)));
 
         if (assetMap.containsKey(assetBasename)) {
           printError('Found 2 asset keys with the same name, skip ${asset.entryUri}');
