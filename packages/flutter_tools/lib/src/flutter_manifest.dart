@@ -169,14 +169,8 @@ String buildSchemaPath(FileSystem fs) {
 }
 
 Future<Schema> futureSchema(String schemaUrl) async {
-//  return Schema.createSchemaFromUrl(schemaUrl);
 
   final Uri uri = Uri.parse(schemaUrl);
-
-//  final String newSchemaUrl = new Uri.file(schemaUrl,windows: true).toFilePath(windows: true);
-
-
-//  final Uri uri = Uri.parse(newSchemaUrl);
 
   if (true) {
     final io.File file = new io.File(
@@ -226,63 +220,9 @@ Future<Schema> futureSchema(String schemaUrl) async {
 }
 Future<bool> _validate(Object manifest) async {
   final String schemaPath = buildSchemaPath(fs);
-/*
-  final String schemaDir = buildSchemaDir(fs);
 
-
-  final Uri uri = Uri.parse(schemaPath);
-
-//  final String aa = schemaPath;//fs.path.toUri(schemaPath).toString();
-
-  final io.File f = new io.File(uri.toFilePath());
-  if (!f.existsSync()) {
-    printError('File does not exist ${f.path}');
-
-    if (!new io.Directory(schemaDir).existsSync()) {
-      printError('Folder $schemaDir does not exist');
-
-      new io.Directory(schemaDir).createSync(recursive: true);
-
-      if (!new io.Directory(schemaDir).existsSync()) {
-        printError('Folder ${schemaDir} still does not exist');
-      }
-    }
-  } else {
-    print ('File can find that thing ${f.path}');
-  }
-
-//  fs.directory(fs.file(aa).basename).createSync(recursive: true);
-//  fs.file(aa).writeAsStringSync('{aaaaa}');
-
-*/
-
-  final Schema schema = await
-
-
-  // original
-//  Schema.createSchemaFromUrl(fs.path.toUri(schemaPath).toString());
-
-  // last workable try
-  futureSchema(fs.path.toUri(schemaPath).toString());
-
-//  Schema.createSchemaFromUrl(fs.file(schemaPath).absolute.path); - url must be http, file or empty C:\Users/fmatos/code/android/flutter/fwk_flutter\packages\flutter_tools\schema\pubspec_yaml.json
-
-//  Schema.createSchemaFromUrl(Uri.parse(schemaPath).toString()); //-- no such file or directory /C:/Users/fmatos/code/android/flutter/fwk_flutter/packages/flutter_tools/schema/pubspec_yaml.json
-
-//  Schema.createSchemaFromUrl(
-//      new Uri.file(schemaPath, windows: true).toFilePath(windows: true)); -- Url schemd must be http, file, or empty: C:\Users\fmatos\code\android\flutter\fwk_flutter\packages\flutter_tools\schema\pubspec_yaml.json
-
-//  Schema.createSchemaFromUrl(
-//     'file://'+ new Uri.file(schemaPath, windows: true).toFilePath(windows: false)); //-- Cannot open file, path = '/C:/Users/fmatos/code/android/flutter/fwk_flutter/packages/flutter_tools/schema/pubspec_yaml.json'
-
-//  final Schema schema = await futureSchema(Uri.parse(schemaPath).toString());
-
-//  final Schema schema = await futureSchema(Uri.parse(r'$schemaPath').toString());
-//  final Schema schema = await futureSchema(schemaPath);
-
-//  final Schema schema = await futureSchema(Uri.parse(r"${schemaPath}").toString());
-
-//  final Schema schema = await Schema.createSchemaFromUrl(r'$schemaPath');
+  final Schema schema = await Schema.createSchemaFromUrl(
+      fs.path.toUri(schemaPath).toString());
 
   final Validator validator = new Validator(schema);
   if (validator.validate(manifest)) {

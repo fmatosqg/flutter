@@ -4,6 +4,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' as io;
 
 import 'package:file/file.dart';
 import 'package:file/memory.dart';
@@ -545,15 +546,26 @@ $assetsSection
       return schemaFile.readAsStringSync();
     }
 
-    void writeSchema(String schema, FileSystem filesystem) {
-      final String schemaPath = buildSchemaPath(filesystem);
-      final File schemaFile = filesystem.file(schemaPath);
+    void writeSchemaFile(FileSystem filesystem, String schemaData) {
+      final String normalizeStep1 = buildSchemaPath(filesystem);
 
-      final Directory schemaDir = filesystem.directory(
-          buildSchemaDir(filesystem));
+      final normalizeStep2 = fs.path.toUri(normalizeStep1).toString();
+      final Uri normalizeStep3 = Uri.parse(normalizeStep2);
 
-      schemaDir.createSync(recursive: true);
-      schemaFile.writeAsStringSync(schema);
+      final io.File file = new io.File(normalizeStep3.toFilePath());
+
+      final String dirname = fs
+          .file(file.path)
+          .dirname;
+      final dir = new io.Directory(dirname);
+      dir.createSync(recursive: true);
+
+      print('Dir exists? ${dir.existsSync()} -- ${dir.path}');
+
+      file.writeAsStringSync(schemaData);
+
+      print('File exists? ${file.existsSync()} -- ${file.path}');
+
     }
 
     void testUsingContextAndFs(String description, dynamic testMethod(),) {
@@ -570,7 +582,7 @@ $assetsSection
 
       testUsingContext('$description - on windows FS', () async {
         establishFlutterRoot();
-        writeSchema(schema, windowsFs);
+        writeSchemaFile(windowsFs, schema);
         await testMethod();
       }, overrides: <Type, Generator>{
         FileSystem: () => windowsFs,
@@ -582,7 +594,7 @@ $assetsSection
 
       testUsingContext('$description - on posix FS', () async {
         establishFlutterRoot();
-        writeSchema(schema, posixFs);
+        writeSchemaFile(posixFs, schema);
         await testMethod();
       }, overrides: <Type, Generator>{
         FileSystem: () => posixFs,

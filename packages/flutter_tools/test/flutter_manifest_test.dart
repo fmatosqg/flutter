@@ -1,3 +1,6 @@
+// Copyright 2017 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
 import 'dart:io' as io;
 
 import 'package:file/file.dart';
@@ -9,14 +12,6 @@ import 'package:test/test.dart';
 
 import 'src/common.dart';
 import 'src/context.dart';
-
-// Copyright 2017 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
-
-//as test_package;
-//import 'package:test/test.dart' hide testUsingContext;
 
 
 void main() {
@@ -213,7 +208,7 @@ flutter:
       final FlutterManifest flutterManifest = await FlutterManifest.createFromString(manifest);
 
       const String expectedFontsDescriptor = '[{fonts: [{asset: a/bar}, {style: italic, weight: 400, asset: a/bar}], family: foo},'
-                                             ' {fonts: [{asset: a/baz}, {style: italic, weight: 400, asset: a/baz}], family: bar}]';
+          ' {fonts: [{asset: a/baz}, {style: italic, weight: 400, asset: a/baz}], family: bar}]';
       expect(flutterManifest.fontsDescriptor.toString(), expectedFontsDescriptor);
       final List<Font> fonts = flutterManifest.fonts;
       expect(fonts.length, 2);
@@ -274,7 +269,7 @@ flutter:
 
 
       const String expectedFontsDescriptor = '[{fonts: [{asset: a/bar}, {style: italic, weight: 400, asset: a/bar}], family: foo},'
-                                             ' {fonts: [{asset: a/baz}, {style: italic, weight: 400, asset: a/baz}]}]';
+          ' {fonts: [{asset: a/baz}, {style: italic, weight: 400, asset: a/baz}]}]';
       expect(flutterManifest.fontsDescriptor.toString(), expectedFontsDescriptor);
       final List<Font> fonts = flutterManifest.fonts;
       expect(fonts.length, 1);
@@ -314,7 +309,7 @@ flutter:
       final FlutterManifest flutterManifest = await FlutterManifest.createFromString(manifest);
 
       const String expectedFontsDescriptor = '[{fonts: [{asset: a/bar}, {style: italic, weight: 400, asset: a/bar}], family: foo},'
-                                             ' {family: bar}]';
+          ' {family: bar}]';
       expect(flutterManifest.fontsDescriptor.toString(), expectedFontsDescriptor);
       final List<Font> fonts = flutterManifest.fonts;
       expect(fonts.length, 1);
@@ -389,14 +384,7 @@ flutter:
       final normalizeStep2 = fs.path.toUri(normalizeStep1).toString();
       final Uri normalizeStep3 = Uri.parse(normalizeStep2);
 
-      final io.File file = new io.File(
-          normalizeStep3.scheme == 'file'
-              ? normalizeStep3.toFilePath()
-              : normalizeStep2);
-
-//      final File schemaFile = filesystem.file(schemaPath);
-
-//      final String schemaDir = buildSchemaDir(filesystem);
+      final io.File file = new io.File(normalizeStep3.toFilePath());
 
       final String dirname = fs
           .file(file.path)
@@ -409,83 +397,16 @@ flutter:
       file.writeAsStringSync(schemaData);
 
       print('File exists? ${file.existsSync()} -- ${file.path}');
-
-//      filesystem.directory(schemaDir).createSync(recursive: true);
-//      filesystem.file(schemaFile).writeAsStringSync(schemaData);
-
-
-//      Uri uri = Uri.parse(schemaData);
-//     final io.File f =  new io.File(schemaPath);
-//     f.writeAsString(schemaData);
-
     }
-//
-//    void testUsingContextt(
-//        String description,
-//        FutureOr<void> body(), {
-//          Map<Type, Generator> overrides: const <Type, Generator>{}
-//        }) {
-//      testUsingContext(description, () {
-//        return io.IOOverrides.runZoned(
-//          body,
-//          createDirectory: (String path) => fs.directory(path),
-//          createFile: (String path) => fs.file(path),
-//          createLink: (String path) => fs.link(path),
-//          getCurrentDirectory: () => fs.currentDirectory,
-//          setCurrentDirectory: (String path) => fs.currentDirectory = path,
-//          getSystemTempDirectory: () => fs.systemTempDirectory,
-//          stat: (String path) => fs.stat(path),
-//          statSync: (String path) => fs.statSync(path),
-//          fseIdentical: (String p1, String p2) => fs.identical(p1, p2),
-//          fseIdenticalSync: (String p1, String p2) => fs.identicalSync(p1, p2),
-//          fseGetType: (String path, bool followLinks) =>
-//              fs.type(path, followLinks: followLinks),
-//          fseGetTypeSync: (String path, bool followLinks) =>
-//              fs.typeSync(path, followLinks: followLinks),
-//          fsWatch: (String a, int b, bool c) =>
-//          throw new UnsupportedError('unsupported'),
-//          fsWatchIsSupported: () => fs.isWatchSupported,
-//        );
-//      },
-//      overrides: overrides);
-//    }
+
 
     void testUsingContextAndFs<R>(String description, FileSystem filesystem,
         R body()) {
-      const String schemaData = '{}';
-
-//
-//      testUsingContextt(description,
-//              () async {
-//            writeSchemaFile( filesystem, schemaData);
-//            testMethod();
-//      },
-//          overrides: <Type, Generator>{
-//            FileSystem: () => filesystem,
-//          }
-//      );
-
-
       testUsingContext(description, () async {
         return io.IOOverrides.runZoned<void>(
           body,
           createDirectory: (String path) => fs.directory(path),
           createFile: (String path) => fs.file(path),
-          createLink: (String path) => fs.link(path),
-          getCurrentDirectory: () => fs.currentDirectory,
-          setCurrentDirectory: (String path) => fs.currentDirectory = path,
-          getSystemTempDirectory: () => fs.systemTempDirectory,
-          stat: (String path) => fs.stat(path),
-          statSync: (String path) => fs.statSync(path),
-          fseIdentical: (String p1, String p2) => fs.identical(p1, p2),
-          fseIdenticalSync: (String p1, String p2) => fs.identicalSync(p1, p2),
-          fseGetType: (String path, bool followLinks) =>
-              fs.type(path, followLinks: followLinks),
-          fseGetTypeSync: (String path, bool followLinks) =>
-              fs.typeSync(path, followLinks: followLinks),
-          fsWatch: (String a, int b, bool c) =>
-          throw new UnsupportedError('unsupported'),
-          fsWatchIsSupported: () => fs.isWatchSupported,
         );
       },
           overrides: <Type, Generator>{
@@ -510,8 +431,6 @@ flutter:
           assertSchemaIsReadable();
         }
     );
-
   });
-
 }
 
