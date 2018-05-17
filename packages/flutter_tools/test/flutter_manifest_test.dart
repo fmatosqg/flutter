@@ -1,6 +1,4 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
+import 'dart:io' as io;
 
 import 'package:file/file.dart';
 import 'package:file/memory.dart';
@@ -11,6 +9,15 @@ import 'package:test/test.dart';
 
 import 'src/common.dart';
 import 'src/context.dart';
+
+// Copyright 2017 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+
+//as test_package;
+//import 'package:test/test.dart' hide testUsingContext;
+
 
 void main() {
   setUpAll(() {
@@ -377,28 +384,113 @@ flutter:
     }
 
     void writeSchemaFile(FileSystem filesystem, String schemaData) {
-      final String schemaPath = buildSchemaPath(filesystem);
-      final File schemaFile = filesystem.file(schemaPath);
+      final String normalizeStep1 = buildSchemaPath(filesystem);
 
-      final String schemaDir = buildSchemaDir(filesystem);
+      final normalizeStep2 = fs.path.toUri(normalizeStep1).toString();
+      final Uri normalizeStep3 = Uri.parse(normalizeStep2);
 
-      filesystem.directory(schemaDir).createSync(recursive: true);
-      filesystem.file(schemaFile).writeAsStringSync(schemaData);
+      final io.File file = new io.File(
+          normalizeStep3.scheme == 'file'
+              ? normalizeStep3.toFilePath()
+              : normalizeStep2);
+
+//      final File schemaFile = filesystem.file(schemaPath);
+
+//      final String schemaDir = buildSchemaDir(filesystem);
+
+      final String dirname = fs
+          .file(file.path)
+          .dirname;
+      final dir = new io.Directory(dirname);
+      dir.createSync(recursive: true);
+
+      print('Dir exists? ${dir.existsSync()} -- ${dir.path}');
+
+      file.writeAsStringSync(schemaData);
+
+      print('File exists? ${file.existsSync()} -- ${file.path}');
+
+//      filesystem.directory(schemaDir).createSync(recursive: true);
+//      filesystem.file(schemaFile).writeAsStringSync(schemaData);
+
+
+//      Uri uri = Uri.parse(schemaData);
+//     final io.File f =  new io.File(schemaPath);
+//     f.writeAsString(schemaData);
+
     }
+//
+//    void testUsingContextt(
+//        String description,
+//        FutureOr<void> body(), {
+//          Map<Type, Generator> overrides: const <Type, Generator>{}
+//        }) {
+//      testUsingContext(description, () {
+//        return io.IOOverrides.runZoned(
+//          body,
+//          createDirectory: (String path) => fs.directory(path),
+//          createFile: (String path) => fs.file(path),
+//          createLink: (String path) => fs.link(path),
+//          getCurrentDirectory: () => fs.currentDirectory,
+//          setCurrentDirectory: (String path) => fs.currentDirectory = path,
+//          getSystemTempDirectory: () => fs.systemTempDirectory,
+//          stat: (String path) => fs.stat(path),
+//          statSync: (String path) => fs.statSync(path),
+//          fseIdentical: (String p1, String p2) => fs.identical(p1, p2),
+//          fseIdenticalSync: (String p1, String p2) => fs.identicalSync(p1, p2),
+//          fseGetType: (String path, bool followLinks) =>
+//              fs.type(path, followLinks: followLinks),
+//          fseGetTypeSync: (String path, bool followLinks) =>
+//              fs.typeSync(path, followLinks: followLinks),
+//          fsWatch: (String a, int b, bool c) =>
+//          throw new UnsupportedError('unsupported'),
+//          fsWatchIsSupported: () => fs.isWatchSupported,
+//        );
+//      },
+//      overrides: overrides);
+//    }
 
-    void testUsingContextAndFs(String description, FileSystem filesystem,
-        dynamic testMethod()) {
+    void testUsingContextAndFs<R>(String description, FileSystem filesystem,
+        R body()) {
       const String schemaData = '{}';
 
-      testUsingContext(description,
-              () async {
-            writeSchemaFile( filesystem, schemaData);
-            testMethod();
+//
+//      testUsingContextt(description,
+//              () async {
+//            writeSchemaFile( filesystem, schemaData);
+//            testMethod();
+//      },
+//          overrides: <Type, Generator>{
+//            FileSystem: () => filesystem,
+//          }
+//      );
+
+
+      testUsingContext(description, () async {
+        return io.IOOverrides.runZoned<void>(
+          body,
+          createDirectory: (String path) => fs.directory(path),
+          createFile: (String path) => fs.file(path),
+          createLink: (String path) => fs.link(path),
+          getCurrentDirectory: () => fs.currentDirectory,
+          setCurrentDirectory: (String path) => fs.currentDirectory = path,
+          getSystemTempDirectory: () => fs.systemTempDirectory,
+          stat: (String path) => fs.stat(path),
+          statSync: (String path) => fs.statSync(path),
+          fseIdentical: (String p1, String p2) => fs.identical(p1, p2),
+          fseIdenticalSync: (String p1, String p2) => fs.identicalSync(p1, p2),
+          fseGetType: (String path, bool followLinks) =>
+              fs.type(path, followLinks: followLinks),
+          fseGetTypeSync: (String path, bool followLinks) =>
+              fs.typeSync(path, followLinks: followLinks),
+          fsWatch: (String a, int b, bool c) =>
+          throw new UnsupportedError('unsupported'),
+          fsWatchIsSupported: () => fs.isWatchSupported,
+        );
       },
           overrides: <Type, Generator>{
             FileSystem: () => filesystem,
-          }
-      );
+          });
     }
 
     testUsingContext('Validate manifest on original fs', () async {
@@ -407,12 +499,14 @@ flutter:
 
     testUsingContextAndFs('Validate manifest on Posix FS',
         new MemoryFileSystem(style: FileSystemStyle.posix), () async {
+          writeSchemaFile(fs, '{}');
           assertSchemaIsReadable();
         }
     );
 
     testUsingContextAndFs('Validate manifest on Windows FS',
         new MemoryFileSystem(style: FileSystemStyle.windows), () async {
+          writeSchemaFile(fs, '{}');
           assertSchemaIsReadable();
         }
     );
