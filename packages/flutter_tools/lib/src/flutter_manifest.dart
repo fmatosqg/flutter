@@ -3,8 +3,6 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:convert' as convert;
-import 'dart:io' as io;
 
 import 'package:json_schema/json_schema.dart';
 import 'package:meta/meta.dart';
@@ -168,56 +166,6 @@ String buildSchemaPath(FileSystem fs) {
   );
 }
 
-Future<Schema> futureSchema(String schemaUrl) async {
-
-  final Uri uri = Uri.parse(schemaUrl);
-
-  if (true) {
-    final io.File file = new io.File(
-        uri.scheme == 'file' ? uri.toFilePath() : schemaUrl);
-    if (file.existsSync()) {
-      print('File exists ${file.path}');
-    } else {
-      print('File NOT exists ${file.path} lets create it, scheme is ${uri.scheme}');
-
-      final String dirname = fs
-          .file(file.path)
-          .dirname;
-      final io.Directory dir = new io.Directory(dirname);
-      if (dir.existsSync()) {
-        print('Dir exists ${dir.path}');
-      } else {
-        print('Dir NOT exists ${dir.path}');
-
-        dir.createSync(recursive: true);
-        if (new io.Directory(dirname).existsSync()) {
-          print('Dir now exists ${dir.path}');
-
-//          file.writeAsStringSync('{}');
-
-          final String whatever = new io.File(
-              uri.scheme == 'file' ? uri.toFilePath() : schemaUrl)
-              .readAsStringSync();
-
-          print('Schema finally is read, contents: $whatever');
-        } else {
-          print('Dir still NOT exists ${dir.path}');
-        }
-      }
-    }
-  }
-
-
-  print('Scheme is ${uri.scheme} -- $uri');
-
-  if (uri.scheme == 'file' || uri.scheme == '') {
-    return new io.File(uri.scheme == 'file' ? uri.toFilePath() : schemaUrl)
-        .readAsString()
-        .then((text) => Schema.createSchema(convert.json.decode(text)));
-  } else {
-    throw new Exception('Nonsense c: is a valid uri scheme: $schemaUrl');
-  }
-}
 Future<bool> _validate(Object manifest) async {
   final String schemaPath = buildSchemaPath(fs);
 

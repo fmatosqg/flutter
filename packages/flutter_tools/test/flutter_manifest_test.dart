@@ -381,7 +381,7 @@ flutter:
     void writeSchemaFile(FileSystem filesystem, String schemaData) {
       final String normalizeStep1 = buildSchemaPath(filesystem);
 
-      final normalizeStep2 = fs.path.toUri(normalizeStep1).toString();
+      final String normalizeStep2 = fs.path.toUri(normalizeStep1).toString();
       final Uri normalizeStep3 = Uri.parse(normalizeStep2);
 
       final io.File file = new io.File(normalizeStep3.toFilePath());
@@ -389,7 +389,7 @@ flutter:
       final String dirname = fs
           .file(file.path)
           .dirname;
-      final dir = new io.Directory(dirname);
+      final io.Directory dir = new io.Directory(dirname);
       dir.createSync(recursive: true);
 
       print('Dir exists? ${dir.existsSync()} -- ${dir.path}');
